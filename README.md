@@ -4,6 +4,8 @@ Standalone commercial site for a private, local-first AI workspace installed on 
 
 This repository is intentionally independent from personal portfolio and CV projects.
 
+Live product site: [goringich.github.io/local-ai-os](https://goringich.github.io/local-ai-os/)
+
 ## Offer
 
 - Pilot: 49,900 ₽
