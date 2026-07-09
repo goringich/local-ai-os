@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import ProductDetails from './ProductDetails'
 
 const TELEGRAM_URL = 'https://t.me/a1gorithms'
 const EMAIL_URL = 'mailto:actingsv@gmail.com?subject=LOCAL%20AI%20OS%20—%20диагностика'
@@ -61,7 +62,9 @@ function Header() {
       </button>
       <nav className={open ? 'nav is-open' : 'nav'} aria-label="Основная навигация">
         <a href="#system" onClick={() => setOpen(false)}>Система</a>
+        <a href="#technical" onClick={() => setOpen(false)}>Техника</a>
         <a href="#pilot" onClick={() => setOpen(false)}>Пилот</a>
+        <a href="#release" onClick={() => setOpen(false)}>Релизы</a>
         <a href="#acceptance" onClick={() => setOpen(false)}>Приёмка</a>
       </nav>
       <a className="header-cta" href={TELEGRAM_URL} target="_blank" rel="noreferrer">
@@ -97,10 +100,10 @@ function App() {
           <section className="hero" aria-labelledby="hero-title">
             <div className="hero-copy">
               <h1 id="hero-title">Частный ИИ-контур на вашей Linux-машине.</h1>
-              <p>Контекст проектов, локальные модели, Obsidian/RAG, мониторинг и восстановление — собранные в одну проверяемую систему.</p>
+              <p>Контекст проектов, локальные модели, Obsidian/RAG, мониторинг, release pipeline и восстановление — собранные в одну проверяемую систему.</p>
               <div className="hero-actions">
                 <a className="button button-primary" href={TELEGRAM_URL} target="_blank" rel="noreferrer">Запустить диагностику <ArrowIcon /></a>
-                <a className="button button-secondary" href="#pilot">Что входит <ArrowIcon /></a>
+                <a className="button button-secondary" href="#technical">Техническая схема <ArrowIcon /></a>
               </div>
             </div>
             <ArchitectureVisual />
@@ -134,6 +137,8 @@ function App() {
               </aside>
             </div>
           </section>
+
+          <ProductDetails />
 
           <section className="pilot-section section" id="pilot" aria-labelledby="pilot-title">
             <h2 id="pilot-title">Пилот за 5 рабочих дней.</h2>
@@ -186,7 +191,7 @@ function App() {
         </main>
         <footer>
           <a className="wordmark" href="#top">LOCAL AI OS</a>
-          <a href="https://github.com/goringich/system-bootstrap/tree/codex/local-ai-stack-snapshot" target="_blank" rel="noreferrer">Техническая база <ArrowIcon /></a>
+          <a href="https://github.com/goringich/local-ai-os/blob/main/docs/release-pipeline.md" target="_blank" rel="noreferrer">Release pipeline <ArrowIcon /></a>
         </footer>
       </div>
     </>

@@ -1,0 +1,40 @@
+name: product-release-gate
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+    tags:
+      - 'product-v*'
+
+permissions:
+  contents: read
+
+jobs:
+  qa:
+    name: Product QA
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Run product QA
+        run: npm run qa
+
+      - name: Verify release docs exist
+        run: |
+          test -f docs/technical-architecture.md
+          test -f docs/release-pipeline.md
+          test -f scripts/check-docs.mjs
