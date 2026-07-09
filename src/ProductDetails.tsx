@@ -1,3 +1,4 @@
+import ArchitectureBlueprint from './ArchitectureBlueprint'
 import ProductHandbook from './ProductHandbook'
 import './product-details.css'
 
@@ -44,6 +45,8 @@ function ProductDetails() {
           ))}
         </div>
       </section>
+
+      <ArchitectureBlueprint />
 
       <section className="deliverables-section section" id="deliverables" aria-labelledby="deliverables-title">
         <div className="section-heading">
