@@ -27,8 +27,14 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci
-      - name: Verify and build
+      - name: Generate release status
+        run: npm run release:status
+      - name: Verify offer, lint and build
         run: npm run qa
+      - name: Verify Obsidian docs sync plan
+        run: npm run docs:sync
+        env:
+          OBSIDIAN_SYNC_DRY_RUN: "1"
       - name: Configure Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact
