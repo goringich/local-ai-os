@@ -1,3 +1,4 @@
+import ProductHandbook from './ProductHandbook'
 import './product-details.css'
 
 const technicalLayers = [
@@ -75,6 +76,8 @@ function ProductDetails() {
           ))}
         </ol>
       </section>
+
+      <ProductHandbook />
     </>
   )
 }
