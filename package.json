@@ -5,12 +5,14 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "release:status": "node scripts/build-release-status.mjs",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "check:offer": "node scripts/check-offer.mjs",
     "check:docs": "node scripts/check-docs.mjs",
-    "qa": "npm run check:offer && npm run check:docs && npm run lint && npm run build && npm audit --audit-level=high"
+    "docs:sync": "node scripts/sync-obsidian-docs.mjs",
+    "qa": "npm run release:status && npm run check:offer && npm run check:docs && npm run lint && npm run build && npm audit --audit-level=high"
   },
   "dependencies": {
     "react": "^19.2.0",

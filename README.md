@@ -27,7 +27,10 @@ LOCAL AI OS is positioned as a productized installation, not a loose consulting 
 ## Technical documentation
 
 - [Technical architecture](./docs/technical-architecture.md)
+- [Product technical manual](./docs/product-technical.md)
+- [Architecture map](./docs/architecture.md)
 - [Release pipeline](./docs/release-pipeline.md)
+- [Obsidian sync](./docs/obsidian-sync.md)
 
 The public docs describe the product boundary only. Private machine paths, raw logs, prompts, responses, credentials, cookies, auth files, and environment files do not belong in this repository.
 
@@ -54,17 +57,28 @@ git push origin product-v0.1.0
 
 ```bash
 npm install
+npm run release:status
 npm run dev
 npm run qa
+npm run docs:sync
 ```
 
 `npm run qa` checks:
 
+- release manifest generation;
 - offer invariants;
 - documentation invariants;
 - lint;
 - TypeScript/Vite build;
 - high-severity npm audit.
+
+## Product System
+
+- Product UI: interactive architecture map, current release panel, technical layers, documentation map, delivery pipeline and acceptance evidence.
+- Release status: `scripts/build-release-status.mjs` generates `public/release-status.json` for the deployed UI and `docs/release-status.md` for documentation sync.
+- Documentation: `docs/technical-architecture.md`, `docs/product-technical.md`, `docs/architecture.md`, `docs/release-pipeline.md`, and `docs/obsidian-sync.md`.
+- Obsidian sync: `npm run docs:sync` mirrors curated docs into `Desktop/Obsidian/ИИ/Local AI Operating System/Product/` and `system-bootstrap/docs/local-ai-stack/product/`.
+- Deploy: `.github/workflows/deploy-pages.yml` verifies, builds and deploys GitHub Pages on `main`.
 
 ## Contacts
 

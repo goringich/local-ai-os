@@ -1,0 +1,33 @@
+{
+  "product": "LOCAL AI OS",
+  "version": "0.1.0",
+  "channel": "preview",
+  "state": "local-preview",
+  "sourceRef": "local",
+  "commit": "cd8c30cfb8656625e918f29d7dc105885cf433d3",
+  "generatedAt": "local-dev",
+  "deploymentUrl": "https://goringich.github.io/local-ai-os/",
+  "workflowUrl": "https://github.com/goringich/local-ai-os/actions/workflows/deploy-pages.yml",
+  "checks": [
+    {
+      "name": "offer-contract",
+      "state": "pass",
+      "summary": "Commercial invariants and anti-portfolio coupling are checked."
+    },
+    {
+      "name": "lint",
+      "state": "pending",
+      "summary": "ESLint checks React and TypeScript code."
+    },
+    {
+      "name": "build",
+      "state": "pending",
+      "summary": "TypeScript and Vite produce the production bundle."
+    },
+    {
+      "name": "docs-sync",
+      "state": "pass",
+      "summary": "Repo docs define the Obsidian sync targets and can be mirrored with docs:sync."
+    }
+  ]
+}
