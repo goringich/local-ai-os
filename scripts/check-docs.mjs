@@ -6,7 +6,7 @@ const files = {
   readme: read('../README.md'),
   release: read('../docs/release-pipeline.md'),
   architecture: read('../docs/technical-architecture.md'),
-  app: read('../src/App.tsx'),
+  portal: read('../src/ProductPortal.tsx'),
 }
 
 const required = [
@@ -18,8 +18,14 @@ const required = [
   ['architecture', 'Source of truth'],
   ['architecture', 'Release layer'],
   ['architecture', 'Project Atlas'],
-  ['app', '49 900 ₽'],
-  ['app', 'Не обещаем полную автономию'],
+  ['portal', '49 900 ₽'],
+  ['portal', '9 900 ₽'],
+  ['portal', '5 рабочих дней'],
+  ['portal', 'Obsidian'],
+  ['portal', 'Codex'],
+  ['portal', 'Project Atlas'],
+  ['portal', 'Release'],
+  ['portal', 'Безопасность'],
 ]
 
 for (const [file, value] of required) {
