@@ -31,6 +31,7 @@ LOCAL AI OS is positioned as a productized installation, not a loose consulting 
 - [Architecture map](./docs/architecture.md)
 - [Release pipeline](./docs/release-pipeline.md)
 - [Obsidian sync](./docs/obsidian-sync.md)
+- [Growth readiness](./docs/growth-readiness.md)
 
 The public docs describe the product boundary only. Private machine paths, raw logs, prompts, responses, credentials, cookies, auth files, and environment files do not belong in this repository.
 

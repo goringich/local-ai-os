@@ -6,6 +6,7 @@ const files = {
   readme: read('../README.md'),
   release: read('../docs/release-pipeline.md'),
   architecture: read('../docs/technical-architecture.md'),
+  growth: read('../docs/growth-readiness.md'),
   app: read('../src/App.tsx'),
 }
 
@@ -18,6 +19,9 @@ const required = [
   ['architecture', 'Source of truth'],
   ['architecture', 'Release layer'],
   ['architecture', 'Project Atlas'],
+  ['growth', 'Status: incubation'],
+  ['growth', 'Do not buy traffic for the current product shell'],
+  ['growth', 'one narrow external workflow'],
   ['app', '49 900 ₽'],
   ['app', 'Не обещаем полную автономию'],
 ]
