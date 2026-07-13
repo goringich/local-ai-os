@@ -1,0 +1,13 @@
+{
+  "proofs": [
+    {
+      "id": "founder-context-control-001",
+      "kind": "founder-proof",
+      "status": "verified",
+      "title": "Founder proof: bounded-context control surface",
+      "workflow": "Context preparation → scoped work item → verification → sanitized report",
+      "capturedAt": "2026-07-13",
+      "summary": "A founder-operated aggregate telemetry snapshot. It is not a customer case study and does not claim a baseline comparison where none was recorded."
+    }
+  ]
+}

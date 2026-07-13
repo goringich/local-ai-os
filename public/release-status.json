@@ -4,7 +4,7 @@
   "channel": "preview",
   "state": "local-preview",
   "sourceRef": "local",
-  "commit": "cd8c30cfb8656625e918f29d7dc105885cf433d3",
+  "commit": "local",
   "generatedAt": "local-dev",
   "deploymentUrl": "https://goringich.github.io/local-ai-os/",
   "workflowUrl": "https://github.com/goringich/local-ai-os/actions/workflows/deploy-pages.yml",

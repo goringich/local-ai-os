@@ -1,87 +1,67 @@
 # LOCAL AI OS
 
-Standalone commercial site for a private, local-first AI workspace installed on one Linux workstation.
+Proof-first public product surface for a private Linux/Codex workflow: bounded context, scoped execution, verification, and a sanitized report the owner can assess.
 
-This repository is intentionally independent from personal portfolio and CV projects. It is the public product shell for the wider LOCAL AI OS architecture.
+Live site: [goringich.github.io/local-ai-os](https://goringich.github.io/local-ai-os/)
 
-Live product site: [goringich.github.io/local-ai-os](https://goringich.github.io/local-ai-os/)
+## Start here
 
-## Offer
+- `/` is the proof-first acquisition page: one failure mode, one controlled workflow, an honest founder proof, and the proof-cohort CTA.
+- `/proofs` and `/proofs/<proof-id>` are shareable, public-safe evidence artifacts.
+- `/product`, `/architecture`, `/runtime`, `/context-memory`, `/codex-orchestrator`, `/project-atlas`, `/integrations`, `/security`, `/deployment`, `/acceptance`, `/operations`, `/recovery`, `/releases`, `/roadmap`, `/docs`, and `/faq` are the technical due-diligence portal.
 
-- Pilot: 49,900 ₽
-- Diagnostic: 9,900 ₽, fully credited toward the pilot
-- Scope: one Linux workstation, up to three projects, five working days
-- Delivery: context, routing, Obsidian/RAG memory, monitoring, recovery, acceptance report
+Every route is emitted as a static `index.html` route artifact during the Vite build, so direct GitHub Pages refreshes work without a server-side router.
 
-## Product shape
+## Public repository versus delivery
 
-LOCAL AI OS is positioned as a productized installation, not a loose consulting session. A release must keep these surfaces aligned:
+This repository is a public product surface, not the complete LOCAL AI OS installation.
 
-- public product page;
-- technical architecture docs;
-- release pipeline docs;
-- QA gates;
-- Obsidian decision note and post-release memory;
-- acceptance report for the operator.
+Publicly inspectable/downloadable:
 
-## Technical documentation
+- the Vite/React product site and GitHub Pages deployment configuration;
+- technical portal Markdown in `docs/product/` and its generated typed snapshot;
+- proof contract, proof cohort terms, public-safe founder proof data, and QA checks;
+- release status generator and static build route generation.
 
+Provided only during an owner-approved implementation:
+
+- workstation-specific runtime/component topology, model routing, ports, and dependency choices;
+- scoped customer configuration, writable boundaries, integration decisions, and acceptance report;
+- recovery plan and handoff tailored to the agreed scope.
+
+Never public: customer source, private paths, prompts, responses, credentials, cookies, secret values, runtime logs, PII, or unapproved repository names.
+
+## Status and commercial boundary
+
+The pilot remains a bounded implementation for one Linux workstation, up to three projects, over five working days. Diagnostic: 9,900 ₽, credited toward a 49,900 ₽ pilot. The product does not promise universal autonomy or an unrestricted shell bridge.
+
+The founder proof is not a customer case. Its metrics are aggregates from a sanitized telemetry rollup; fields without a recorded matched baseline are intentionally `unavailable`.
+
+## Documentation system
+
+`docs/product/` is a reviewed public projection. Obsidian remains the human-readable source of truth for the installed system. `scripts/build-product-docs.mjs` produces `src/product-docs/productDocs.ts`; QA fails if the generated snapshot drifts from the reviewed Markdown.
+
+- [Proof contract](./docs/proof-contract.md)
+- [Proof cohort](./docs/proof-cohort.md)
 - [Technical architecture](./docs/technical-architecture.md)
 - [Product technical manual](./docs/product-technical.md)
-- [Architecture map](./docs/architecture.md)
 - [Release pipeline](./docs/release-pipeline.md)
-- [Obsidian sync](./docs/obsidian-sync.md)
-- [Growth readiness](./docs/growth-readiness.md)
 
-The public docs describe the product boundary only. Private machine paths, raw logs, prompts, responses, credentials, cookies, auth files, and environment files do not belong in this repository.
-
-## Release pipeline
-
-Normal product flow:
-
-1. Record the product decision in Obsidian.
-2. Patch the public page and docs.
-3. Run `npm run qa`.
-4. Merge through PR.
-5. Tag the product release.
-6. Publish/update the product page.
-7. Record the release result and next product increment in Obsidian.
-
-Release tags use the `product-v*` pattern, for example:
-
-```bash
-git tag product-v0.1.0
-git push origin product-v0.1.0
-```
-
-## Development
+## Development and verification
 
 ```bash
 npm install
-npm run release:status
-npm run dev
+npm run docs:build
+npm run check:proofs
 npm run qa
-npm run docs:sync
 ```
 
-`npm run qa` checks:
+`npm run qa` generates release/docs data, validates offer/docs/proofs, lints, builds production assets, confirms direct static routes, and runs the high-severity npm audit. `npm run docs:sync` mirrors curated product docs into the existing Obsidian/tracked-mirror flow; it is not a vault export.
 
-- release manifest generation;
-- offer invariants;
-- documentation invariants;
-- lint;
-- TypeScript/Vite build;
-- high-severity npm audit.
+## Release flow
 
-## Product System
-
-- Product UI: interactive architecture map, current release panel, technical layers, documentation map, delivery pipeline and acceptance evidence.
-- Release status: `scripts/build-release-status.mjs` generates `public/release-status.json` for the deployed UI and `docs/release-status.md` for documentation sync.
-- Documentation: `docs/technical-architecture.md`, `docs/product-technical.md`, `docs/architecture.md`, `docs/release-pipeline.md`, and `docs/obsidian-sync.md`.
-- Obsidian sync: `npm run docs:sync` mirrors curated docs into `Desktop/Obsidian/ИИ/Local AI Operating System/Product/` and `system-bootstrap/docs/local-ai-stack/product/`.
-- Deploy: `.github/workflows/deploy-pages.yml` verifies, builds and deploys GitHub Pages on `main`.
-
-## Contacts
-
-- Telegram: [@a1gorithms](https://t.me/a1gorithms)
-- Email: actingsv@gmail.com
+1. Record the product decision in Obsidian.
+2. Update source docs/proof data and rebuild generated data.
+3. Run `npm run qa`.
+4. Review the public/private boundary and production route artifacts.
+5. Merge through PR, deploy GitHub Pages, then record release outcome and limits.
