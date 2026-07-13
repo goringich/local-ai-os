@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import ProductDetails from './ProductDetails'
 
 const TELEGRAM_URL = 'https://t.me/a1gorithms'
+const TELEGRAM_DIAGNOSTIC_MESSAGE = 'LOCAL AI OS / diagnostic-2026-07: хочу обсудить один повторяющийся workflow'
+const TELEGRAM_DIAGNOSTIC_URL = `${TELEGRAM_URL}?text=${encodeURIComponent(TELEGRAM_DIAGNOSTIC_MESSAGE)}`
 const EMAIL_URL = 'mailto:actingsv@gmail.com?subject=LOCAL%20AI%20OS%20—%20диагностика'
 const REPO_URL = 'https://github.com/goringich/local-ai-os'
 
@@ -142,8 +144,8 @@ function Header() {
         <a href="#delivery" onClick={() => setOpen(false)}>Поставка</a>
         <a href="#technical" onClick={() => setOpen(false)}>Техника</a>
       </nav>
-      <a className="header-cta" href={TELEGRAM_URL} target="_blank" rel="noreferrer">
-        Обсудить пилот <ArrowIcon />
+      <a className="header-cta" href={TELEGRAM_DIAGNOSTIC_URL} target="_blank" rel="noreferrer">
+        3 диагностических места <ArrowIcon />
       </a>
     </header>
   )
@@ -252,9 +254,9 @@ function App() {
             <div className="hero-copy">
               <span className="eyebrow">local-first AI product · Linux · Obsidian-synced docs</span>
               <h1 id="hero-title">LOCAL AI OS как продукт, а не набор скриптов.</h1>
-              <p>Частный AI-контур с архитектурной картой, release pipeline, технической документацией, Obsidian sync и доказательной приёмкой.</p>
+              <p>Набираю трёх технических владельцев: разбираем один повторяющийся workflow, фиксируем baseline и выдаём измеримый план внедрения. Диагностика стоит 9 900 ₽ и полностью засчитывается в пилот.</p>
               <div className="hero-actions">
-                <a className="button button-primary" href={TELEGRAM_URL} target="_blank" rel="noreferrer">Запустить диагностику <ArrowIcon /></a>
+                <a className="button button-primary" href={TELEGRAM_DIAGNOSTIC_URL} target="_blank" rel="noreferrer">Забронировать диагностику <ArrowIcon /></a>
                 <a className="button button-secondary" href="#technical">Техническая схема <ArrowIcon /></a>
               </div>
             </div>
@@ -335,8 +337,8 @@ function App() {
           </section>
 
           <section className="contact-section" id="contact" aria-labelledby="contact-title">
-            <h2 id="contact-title">Соберём вашу систему в один проверяемый контур.</h2>
-            <a className="button button-primary" href={TELEGRAM_URL} target="_blank" rel="noreferrer">Запустить диагностику <ArrowIcon /></a>
+            <h2 id="contact-title">3 диагностических места: один повторяющийся workflow.</h2>
+            <a className="button button-primary" href={TELEGRAM_DIAGNOSTIC_URL} target="_blank" rel="noreferrer">Забронировать слот <ArrowIcon /></a>
             <div className="contact-links">
               <a href={TELEGRAM_URL} target="_blank" rel="noreferrer">Telegram: @a1gorithms</a>
               <a href={EMAIL_URL}>actingsv@gmail.com</a>

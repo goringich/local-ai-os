@@ -49,6 +49,15 @@ Choose only one after external interviews.
 Until these gates pass, use founder education and problem interviews, not paid
 traffic or broad autonomy claims.
 
+### Founder-led paid diagnostic cohort
+
+The incubation boundary does not forbid selling the bounded diagnostic that
+creates the first external evidence. The first cohort is limited to three
+technical owners. Each request must arrive with the Telegram intake marker
+`LOCAL AI OS / diagnostic-2026-07`, name one repeated workflow and agree a
+baseline plus acceptance metric before payment. Do not present the cohort as a
+validated general-purpose AI OS or expand it into paid acquisition.
+
 ## Distribution hypothesis
 
 The expected loop is:
