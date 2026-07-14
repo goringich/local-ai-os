@@ -6,13 +6,19 @@
   "scripts": {
     "dev": "vite",
     "release:status": "node scripts/build-release-status.mjs",
-    "build": "tsc -b && vite build",
+    "build": "npm run docs:build && tsc -b && vite build && node scripts/build-static-routes.mjs",
     "lint": "eslint .",
     "preview": "vite preview",
     "check:offer": "node scripts/check-offer.mjs",
+    "docs:build": "node scripts/build-product-docs.mjs",
     "check:docs": "node scripts/check-docs.mjs",
+    "check:proofs": "node scripts/check-proofs.mjs",
+    "check:routes": "node scripts/check-routes.mjs",
+    "check:ui": "node scripts/check-ui.mjs",
+    "qa:product-standard": "node scripts/check-product-standard.mjs",
+    "qa:product-standard:host": "python /home/goringich/__home_organized/local-codex-stack/scripts/product_operating_standard.py doctor --repo . --format json",
     "docs:sync": "node scripts/sync-obsidian-docs.mjs",
-    "qa": "npm run release:status && npm run check:offer && npm run check:docs && npm run lint && npm run build && npm audit --audit-level=high"
+    "qa": "npm run release:status && npm run docs:build && npm run check:offer && npm run check:docs && npm run check:proofs && npm run check:ui && npm run qa:product-standard && npm run lint && npm run build && npm run check:routes && npm audit --audit-level=high"
   },
   "dependencies": {
     "react": "^19.2.0",

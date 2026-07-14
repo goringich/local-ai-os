@@ -1,0 +1,22 @@
+{
+  "sourceOfTruth": "Obsidian remains the human-readable source of truth; this directory is its reviewed public projection.",
+  "forbiddenPublicContent": ["private paths", "raw prompts", "raw responses", "credentials", "runtime logs", "PII", "private repository names"],
+  "documents": [
+    {"id":"product","route":"/product","file":"00-overview.md","status":"stable"},
+    {"id":"architecture","route":"/architecture","file":"01-architecture.md","status":"stable"},
+    {"id":"runtime","route":"/runtime","file":"02-runtime.md","status":"experimental"},
+    {"id":"context-memory","route":"/context-memory","file":"03-context-memory.md","status":"stable"},
+    {"id":"codex-orchestrator","route":"/codex-orchestrator","file":"04-codex-orchestrator.md","status":"stable"},
+    {"id":"project-atlas","route":"/project-atlas","file":"05-project-atlas.md","status":"experimental"},
+    {"id":"integrations","route":"/integrations","file":"06-integrations.md","status":"planned"},
+    {"id":"security","route":"/security","file":"07-security.md","status":"stable"},
+    {"id":"deployment","route":"/deployment","file":"08-deployment.md","status":"planned"},
+    {"id":"acceptance","route":"/acceptance","file":"09-acceptance.md","status":"stable"},
+    {"id":"operations","route":"/operations","file":"10-operations.md","status":"experimental"},
+    {"id":"recovery","route":"/recovery","file":"11-recovery.md","status":"stable"},
+    {"id":"releases","route":"/releases","file":"12-releases.md","status":"stable"},
+    {"id":"roadmap","route":"/roadmap","file":"13-roadmap.md","status":"planned"},
+    {"id":"docs","route":"/docs","file":"14-docs.md","status":"stable"},
+    {"id":"faq","route":"/faq","file":"15-faq.md","status":"stable"}
+  ]
+}

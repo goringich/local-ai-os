@@ -17,7 +17,10 @@ The product site, release manifest, and documentation pipeline package this cont
 
 | Surface | Role |
 | --- | --- |
-| `src/App.tsx` | Product UI, interactive architecture explorer, release status panel, documentation map, delivery pipeline. |
+| `src/ProductSite.tsx` | Proof-first home, proof index/detail routes, generated technical portal, cohort CTA, and aggregate-only event hooks. |
+| `src/ArchitectureBlueprint.tsx` | Reused PR #5 architecture blueprint for technical due diligence, rendered on `/architecture`. |
+| `docs/product/*.md` | Reviewed public technical snapshot source; generator produces typed site data and QA detects drift. |
+| `public/proofs/*.json` | Public-safe proof index/details only; checked for schema, unavailable values, forbidden content, and verification evidence. |
 | `src/styles.css` | Product visual system and responsive layout. |
 | `public/release-status.json` | Static release manifest consumed by the UI. |
 | `scripts/build-release-status.mjs` | Generates `public/release-status.json` and `docs/release-status.md` from package and CI metadata. |
@@ -52,7 +55,7 @@ Allowed check states are currently free text, but the UI has explicit visual sta
 
 1. Change product code, docs, scripts, or pipeline.
 2. Run `npm run release:status` to refresh local manifest files.
-3. Run `npm run check:offer`, `npm run lint`, and `npm run build`.
+3. Run `npm run qa`: it validates proof data, generated-doc drift, UI invariants, production build, direct static routes, and dependency audit.
 4. Run `npm run docs:sync` when the local Obsidian vault is available.
 5. Push to `main`; GitHub Actions runs QA, builds the manifest, deploys to Pages, and publishes the site.
 
@@ -88,6 +91,8 @@ A release is product-ready when:
 - The offer invariants are checked by `scripts/check-offer.mjs`.
 - The release manifest is present and visible in the UI.
 - The interactive architecture section works on desktop and mobile.
-- Documentation source files exist and `docs:sync` can mirror them.
+- The proof-first route contains a concrete proof and cohort CTA before technical due diligence links.
+- Documentation source files exist, generated data is current, and `docs:sync` can mirror them.
+- Every direct proof and technical route has a static GitHub Pages artifact.
 - The GitHub Pages workflow builds from `main`.
 - Health-gate caveats are reported separately from product build verification.

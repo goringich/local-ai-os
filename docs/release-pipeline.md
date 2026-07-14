@@ -16,27 +16,31 @@ Every change should produce a visible, verifiable product state:
 
 ```bash
 npm run release:status
+npm run docs:build
 npm run check:offer
+npm run check:proofs
+npm run check:ui
 npm run lint
 npm run build
+npm run check:routes
 npm run docs:sync
 ```
 
-`npm run qa` runs the release status generator, offer check, lint, build, and high-severity npm audit.
+`npm run qa` runs the release status generator, generated-docs drift check, proof contract/public-content checks, proof-first UI/accessibility invariants, lint, production build, direct-route check, and high-severity npm audit.
 ## Release train
 
 1. Product decision
    - Create or update an Obsidian decision note.
    - State what changes, what does not change, and which product promise is affected.
 2. Product page patch
-   - Update `src/App.tsx` and `src/styles.css` only when the public story changes.
+   - Update `src/ProductSite.tsx`, proof data, generated docs, and styles only when the public story changes.
    - Preserve the current dark technical visual language unless a deliberate redesign is approved.
 3. Technical documentation patch
    - Update `docs/technical-architecture.md`, `docs/product-technical.md`, `docs/architecture.md`, this release pipeline, or README.
    - Keep the public page, repo docs, and Obsidian note aligned.
 4. QA gate
    - Run `npm run qa`.
-   - The gate includes release manifest generation, offer invariants, documentation invariants, lint, build, and high-severity audit.
+   - The gate includes release manifest generation, offer/docs/proof/UI invariants, lint, build, direct GitHub Pages route artifacts, and high-severity audit.
 5. Release
    - Merge through PR.
    - Create a version tag.
@@ -57,8 +61,8 @@ Expected stages:
 1. Checkout source.
 2. Install dependencies with `npm ci`.
 3. Generate release status.
-4. Verify offer invariants.
-5. Run lint and production build.
+4. Verify the full QA gate, including offer, proof, docs drift, UI, and direct routes.
+5. Build production assets.
 6. Upload `dist`.
 7. Deploy to GitHub Pages.
 
@@ -68,6 +72,8 @@ Expected stages:
 
 - `public/release-status.json` for the product UI;
 - `docs/release-status.md` for Obsidian sync and human review.
+
+The static route builder also copies the built root shell to each declared technical and proof route. GitHub Pages therefore opens direct nested URLs after refresh without a server rewrite.
 
 In GitHub Actions it uses:
 
@@ -112,6 +118,9 @@ git push origin product-v0.1.0-rc.1
 - [ ] Obsidian decision note updated.
 - [ ] README updated when positioning or delivery scope changes.
 - [ ] Public page updated when offer, proof, or product story changes.
+- [ ] `docs/product/` snapshot rebuilt and drift check passes.
+- [ ] Every published proof passes schema, forbidden-content, and verification-evidence checks.
+- [ ] Direct GitHub Pages route artifacts pass `npm run check:routes`.
 - [ ] `docs/technical-architecture.md` still matches the implementation story.
 - [ ] `docs/product-technical.md` and `docs/architecture.md` still match the implementation story.
 - [ ] `npm run qa` passes.

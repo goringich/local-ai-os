@@ -1,0 +1,34 @@
+{
+  "id": "founder-context-control-001",
+  "kind": "founder-proof",
+  "status": "verified",
+  "title": "Founder proof: bounded-context control surface",
+  "workflow": "Context preparation → scoped work item → verification → sanitized report",
+  "summary": "Founder-operated aggregate telemetry, published as a public-safe proof fixture. This is not a client deployment, testimonial, or performance guarantee.",
+  "capturedAt": "2026-07-13",
+  "productVersion": "0.1.0",
+  "approvedForPublic": true,
+  "before": [
+    {"label":"Comparable baseline duration","value":"unavailable","unit":"minutes","source":"No matched baseline was recorded."},
+    {"label":"Comparable baseline token use","value":"unavailable","unit":"tokens","source":"No matched baseline was recorded."},
+    {"label":"Manual interventions","value":"unavailable","unit":"count","source":"Not captured in the aggregate telemetry rollup."}
+  ],
+  "assisted": [
+    {"label":"Verified runs","value":12,"unit":"runs","source":"Sanitized local telemetry aggregate captured 2026-07-13."},
+    {"label":"Context-preflight runs","value":17,"unit":"runs","source":"Sanitized local telemetry aggregate captured 2026-07-13."},
+    {"label":"Recorded input-context characters","value":158460,"unit":"characters","source":"Sanitized local telemetry aggregate captured 2026-07-13."},
+    {"label":"Time to first useful change","value":"unavailable","unit":"minutes","source":"No task-level timestamp pair was approved for this aggregate proof."},
+    {"label":"Changed files","value":"unavailable","unit":"files","source":"Public proof deliberately publishes categories rather than source file names."}
+  ],
+  "changedFileCategories": ["public product UI", "documentation snapshot", "verification gates"],
+  "verification": [
+    {"label":"Aggregate telemetry consistency","result":"pass","evidence":"The recorded aggregate reports 12 verified runs and 17 context-preflight runs; only those aggregates are published."},
+    {"label":"Public proof contract","result":"pass","evidence":"Schema, forbidden-content, and evidence requirements are checked in this repository's QA gate."}
+  ],
+  "limitations": [
+    "No matched before/after task baseline is available, so no improvement percentage is claimed.",
+    "This founder proof is not a customer result and carries no customer identity, source code, prompt, response, path, or runtime log.",
+    "Task duration, manual interventions, and per-task token comparison remain unavailable until an owner-approved cohort workflow records them."
+  ],
+  "shareText": "A founder proof of bounded context, scoped execution, verification, and a sanitized report — with unavailable metrics left unavailable."
+}
