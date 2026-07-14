@@ -9,3 +9,9 @@ Each implementation documents what is backed up, who can restore it, the order o
 - Backups do not imply publication of their contents.
 - Recovery instructions do not include secrets in public documentation.
 - GUI workarounds that force software rendering are incident diagnostics, not accepted final states.
+
+The desktop UX change has a first-line rollback that restores the prior launcher contents without deleting source or runtime data:
+
+```bash
+python /home/goringich/__home_organized/scripts/local-ai-navigator.py --disable
+```

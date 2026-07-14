@@ -13,3 +13,7 @@ Operators use bounded health checks, queue state, freshness, release status, and
 ## Status
 
 The operational model is experimental at product level because the exact services are implementation-specific.
+
+## Desktop operator entry
+
+AI System Navigator is an allowlisted menu inside the existing launcher. It stores only a sanitized enabled/disabled preference. Arbitrary action identifiers are denied, raw prompts and responses are not written to tracked product files, and status continues to come from the existing control plane.

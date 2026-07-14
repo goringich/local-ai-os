@@ -98,6 +98,11 @@ export const productDocs: ProductDoc[] = [
         "heading": "Freshness and provenance",
         "body": "RAG is a retrieval layer, not a second memory. Each installation defines eligible sources, freshness expectations, redaction rules, and budget limits before enabling a workflow.",
         "bullets": []
+      },
+      {
+        "heading": "User-first entry and measured quality",
+        "body": "The optional AI System Navigator exposes Smart Context and Find Knowledge inside the existing Hyprland `Super+D` launcher. Smart Context uses the existing Codex context entrypoint with a micro budget; Find Knowledge returns bounded snippets and source paths instead of a vault dump. On the verified 2026-07-15 fixture set, shared source-authority scoring moved end-to-end retrieval from hit@1 `0.6667` and MRR `0.8241` to hit@1 `1.0` and MRR `1.0`, while hit@3 remained `1.0`. Governed historical context packs contain a best observed ratio of `0.0862` (about `11.6x` reduction). These are local engineering measurements, not customer proof or a guarantee for every task.",
+        "bullets": []
       }
     ]
   },
@@ -259,6 +264,11 @@ export const productDocs: ProductDoc[] = [
         "heading": "Status",
         "body": "The operational model is experimental at product level because the exact services are implementation-specific.",
         "bullets": []
+      },
+      {
+        "heading": "Desktop operator entry",
+        "body": "AI System Navigator is an allowlisted menu inside the existing launcher. It stores only a sanitized enabled/disabled preference. Arbitrary action identifiers are denied, raw prompts and responses are not written to tracked product files, and status continues to come from the existing control plane.",
+        "bullets": []
       }
     ]
   },
@@ -271,7 +281,7 @@ export const productDocs: ProductDoc[] = [
     "blocks": [
       {
         "heading": "Backup and rollback",
-        "body": "Each implementation documents what is backed up, who can restore it, the order of recovery, and a restore dry-run. A bad product-site release is rolled back by reverting or fixing the versioned source and redeploying.",
+        "body": "Each implementation documents what is backed up, who can restore it, the order of recovery, and a restore dry-run. A bad product-site release is rolled back by reverting or fixing the versioned source and redeploying. The desktop UX change has a first-line rollback that restores the prior launcher contents without deleting source or runtime data: ```bash python /home/goringich/__home_organized/scripts/local-ai-navigator.py --disable ```",
         "bullets": [
           "Backups do not imply publication of their contents.",
           "Recovery instructions do not include secrets in public documentation.",
