@@ -1,0 +1,59 @@
+name: chatgpt-lockfile-audit-fix
+
+on:
+  push:
+    branches:
+      - chatgpt/security-audit-fix-20260810
+
+permissions:
+  contents: write
+
+concurrency:
+  group: chatgpt-lockfile-audit-fix
+  cancel-in-progress: true
+
+jobs:
+  repair-lockfile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: true
+          fetch-depth: 1
+
+      - name: Set up Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Resolve lockfile security updates
+        run: npm audit fix --package-lock-only
+
+      - name: Verify clean install and full product QA
+        run: |
+          npm ci
+          npm run qa
+
+      - name: Commit only repaired lockfile when needed
+        env:
+          GITHUB_BRANCH: chatgpt/security-audit-fix-20260810
+        run: |
+          set -Eeuo pipefail
+          changed="$(git diff --name-only)"
+          if [[ -z "${changed}" ]]; then
+            echo "lockfile already current"
+            exit 0
+          fi
+          if [[ "${changed}" != "package-lock.json" ]]; then
+            echo "unexpected files changed:" >&2
+            printf '%s\n' "${changed}" >&2
+            exit 1
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package-lock.json
+          git commit -m "fix(deps): resolve high-severity npm audit findings"
+          git push origin "HEAD:${GITHUB_BRANCH}"
