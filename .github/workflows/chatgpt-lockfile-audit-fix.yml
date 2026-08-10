@@ -42,6 +42,7 @@ jobs:
           GITHUB_BRANCH: chatgpt/security-audit-fix-20260810
         run: |
           set -Eeuo pipefail
+          git checkout -- docs/release-status.md public/release-status.json
           changed="$(git diff --name-only)"
           if [[ -z "${changed}" ]]; then
             echo "lockfile already current"
