@@ -3,6 +3,7 @@ import { productDocs } from './product-docs/productDocs'
 import type { ProductDoc } from './product-docs/types'
 import type { Proof } from './proofs/types'
 import ArchitectureBlueprint from './ArchitectureBlueprint'
+import { OwnedPromotionSlot } from './OwnedPromotionSlot'
 
 const TELEGRAM_URL = 'https://t.me/a1gorithms?text=LOCAL%20AI%20OS%20%2F%20proof-cohort%3A%20%D1%85%D0%BE%D1%87%D1%83%20%D0%BF%D0%BE%D0%B4%D0%B0%D1%82%D1%8C%20%D0%BE%D0%B4%D0%B8%D0%BD%20workflow'
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, '')
@@ -70,6 +71,7 @@ function Home() {
     </section>
     <section className="section"><div className="section-heading"><span>workflow</span><h2>Не магия автономии. Явная цепочка ответственности.</h2></div><Workflow /></section>
     {proof ? <ProofSummary proof={proof} /> : <section className="section"><p>Public-safe proof data unavailable while loading.</p></section>}
+    <OwnedPromotionSlot />
     <section className="section demo"><div className="section-heading"><span>demo flow</span><h2>Один workflow — от проблемы до evidence.</h2></div><div className="demo-grid"><article><strong>1. Baseline</strong><p>Фиксируем доступные поля до работы. Неснятые данные не оцениваем.</p></article><article><strong>2. Boundaries</strong><p>Определяем релевантный контекст, writable scope и команды проверки.</p></article><article><strong>3. Report</strong><p>Оставляем evidence, ограничения и следующий точный action владельцу.</p></article></div></section>
     <section className="portal-bridge"><span>technical due diligence</span><h2>Полная архитектура не исчезла. Она доступна после результата.</h2><div>{portalLinks.slice(0, 8).map(([id, title]) => <a key={id} href={routeHref(productDocs.find((doc) => doc.id === id)?.route ?? '/product')}>{title} →</a>)}</div></section>
   </main>
