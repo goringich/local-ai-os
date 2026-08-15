@@ -1,0 +1,12 @@
+{
+  "schema_version": "2026-08-15.owned-promotion-feed.v1",
+  "host_product": "local-ai-os",
+  "surface_id": "home-after-proof",
+  "surface_class": "public_growth",
+  "status": "hidden_no_relevant_offer",
+  "placements": [],
+  "frequency_cap_per_session": 3,
+  "external_sponsored_ads_enabled": false,
+  "uses_private_targeting": false,
+  "uses_third_party_tracking_pixel": false
+}
