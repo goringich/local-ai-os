@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">LOCAL AI OS — proof-first workflow</title>
+  <desc id="desc">Context, scope, verification and evidence with public-safe founder proof metrics.</desc>
+  <defs>
+    <pattern id="grid" width="42" height="42" patternUnits="userSpaceOnUse">
+      <path d="M42 0H0V42" fill="none" stroke="#2a322b" stroke-opacity=".56" stroke-width="1"/>
+    </pattern>
+    <radialGradient id="glow" cx="82%" cy="8%" r="62%">
+      <stop offset="0" stop-color="#cdf347" stop-opacity=".18"/>
+      <stop offset="1" stop-color="#cdf347" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="630" fill="#080b09"/>
+  <rect width="1200" height="630" fill="url(#grid)"/>
+  <rect width="1200" height="630" fill="url(#glow)"/>
+  <path d="M74 72H1126" stroke="#cdf347" stroke-width="3"/>
+  <text x="74" y="128" fill="#cdf347" font-family="monospace" font-size="18" font-weight="700" letter-spacing="2">PRIVATE LINUX · CODEX · OWNER-CONTROLLED</text>
+  <text x="74" y="230" fill="#f2f5ef" font-family="system-ui, sans-serif" font-size="72" font-weight="700" letter-spacing="-4">LOCAL AI OS</text>
+  <text x="74" y="288" fill="#f2f5ef" font-family="system-ui, sans-serif" font-size="34" font-weight="600">Context. Scope. Verification. Evidence.</text>
+  <text x="74" y="334" fill="#aeb8af" font-family="system-ui, sans-serif" font-size="22">Proof-first workflow. Claims stay bound to public evidence.</text>
+
+  <g transform="translate(74 390)">
+    <rect width="300" height="142" rx="12" fill="#101510" stroke="#49534a"/>
+    <text x="22" y="65" fill="#cdf347" font-family="system-ui, sans-serif" font-size="48" font-weight="700">12</text>
+    <text x="22" y="103" fill="#aeb8af" font-family="monospace" font-size="15">VERIFIED RUNS</text>
+  </g>
+  <g transform="translate(392 390)">
+    <rect width="300" height="142" rx="12" fill="#101510" stroke="#49534a"/>
+    <text x="22" y="65" fill="#cdf347" font-family="system-ui, sans-serif" font-size="48" font-weight="700">17</text>
+    <text x="22" y="103" fill="#aeb8af" font-family="monospace" font-size="15">CONTEXT-PREFLIGHT RUNS</text>
+  </g>
+  <g transform="translate(710 390)">
+    <rect width="416" height="142" rx="12" fill="#101510" stroke="#49534a"/>
+    <text x="22" y="65" fill="#cdf347" font-family="system-ui, sans-serif" font-size="48" font-weight="700">158 460</text>
+    <text x="22" y="103" fill="#aeb8af" font-family="monospace" font-size="15">RECORDED INPUT-CONTEXT CHARS</text>
+  </g>
+  <text x="74" y="590" fill="#7f8a80" font-family="monospace" font-size="14">MATCHED BASELINE: UNAVAILABLE · NO INVENTED IMPROVEMENT %</text>
+</svg>
