@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "2026-08-18.local-ai-os-promo.v1",
+  "id": "local-ai-os-proof-film-001",
+  "title": "LOCAL AI OS — proof-backed product film",
+  "durationSeconds": 25,
+  "language": "ru",
+  "proofId": "founder-context-control-001",
+  "publicUrl": "https://goringich.github.io/local-ai-os/",
+  "cta": "Подай один workflow в proof cohort",
+  "formats": [
+    {
+      "id": "landscape-master",
+      "aspectRatio": "16:9",
+      "width": 1280,
+      "height": 720,
+      "output": ".generated/promo/local-ai-os-promo-16x9.mp4"
+    },
+    {
+      "id": "vertical-social",
+      "aspectRatio": "9:16",
+      "width": 1080,
+      "height": 1920,
+      "output": ".generated/promo/local-ai-os-promo-9x16.mp4"
+    }
+  ],
+  "claims": [
+    {
+      "label": "Verified runs",
+      "expectedValue": 12,
+      "display": "12 verified runs"
+    },
+    {
+      "label": "Context-preflight runs",
+      "expectedValue": 17,
+      "display": "17 context-preflight runs"
+    },
+    {
+      "label": "Recorded input-context characters",
+      "expectedValue": 158460,
+      "display": "158 460 recorded input-context chars"
+    }
+  ],
+  "nonClaims": [
+    "No matched before/after baseline is available.",
+    "No improvement percentage is claimed.",
+    "Founder proof is not presented as a customer result.",
+    "No customer source, prompt, response, private path, credential, PII, or raw runtime log is used."
+  ]
+}
