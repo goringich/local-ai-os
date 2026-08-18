@@ -4,6 +4,7 @@ dist/
 *.tsbuildinfo
 *.log
 .DS_Store
+.generated/
 
 __pycache__/
 *.py[cod]
