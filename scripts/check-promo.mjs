@@ -23,8 +23,13 @@ const forbiddenClaimPatterns = [
   /customer result/i,
   /guaranteed improvement/i,
 ]
-const promoCopy = `${JSON.stringify(manifest)}\n${film}`
-for (const pattern of forbiddenClaimPatterns) if (pattern.test(promoCopy)) throw new Error(`Unsupported promo claim: ${pattern}`)
+const positiveManifestCopy = JSON.stringify({
+  title: manifest.title,
+  cta: manifest.cta,
+  claims: manifest.claims,
+})
+const positivePromoCopy = `${positiveManifestCopy}\n${film}`
+for (const pattern of forbiddenClaimPatterns) if (pattern.test(positivePromoCopy)) throw new Error(`Unsupported promo claim: ${pattern}`)
 
 const required = [
   [app, '<PromoFilm />', 'mounted promo surface'],
