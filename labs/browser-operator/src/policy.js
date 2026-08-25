@@ -33,6 +33,12 @@ const SENSITIVE_FIELD_WORDS = [
   'api key'
 ];
 
+const SEARCH_CONTEXT_WORDS = [
+  'search',
+  'find',
+  'query'
+];
+
 export function normalizeText(value = '') {
   return String(value).replace(/\s+/g, ' ').trim().toLowerCase();
 }
@@ -51,8 +57,12 @@ export function assessActionRisk(action, element = null) {
     return { level: 'deny', reason: 'invalid_action' };
   }
 
-  if (action.type === 'goto' && !isAllowedNavigation(action.url)) {
-    return { level: 'deny', reason: 'unsupported_navigation_scheme' };
+  if (action.type === 'goto') {
+    if (!isAllowedNavigation(action.url)) {
+      return { level: 'deny', reason: 'unsupported_navigation_scheme' };
+    }
+
+    return { level: 'safe', reason: 'ordinary_http_navigation' };
   }
 
   if (action.type === 'done' || action.type === 'wait' || action.type === 'back') {
@@ -66,6 +76,7 @@ export function assessActionRisk(action, element = null) {
     element?.name,
     element?.placeholder,
     element?.type,
+    element?.value,
     element?.href
   ].filter(Boolean).join(' '));
 
@@ -77,7 +88,24 @@ export function assessActionRisk(action, element = null) {
     return { level: 'safe', reason: 'ordinary_form_input' };
   }
 
-  if (action.type === 'click' || action.type === 'press') {
+  if (action.type === 'press') {
+    const key = normalizeText(action.key);
+    if (key === 'enter') {
+      const clearlySearch = element?.type === 'search'
+        || SEARCH_CONTEXT_WORDS.some((word) => context.includes(word));
+      if (!clearlySearch) {
+        return { level: 'approval', reason: 'enter_may_submit_form' };
+      }
+    }
+
+    if (HIGH_RISK_WORDS.some((word) => context.includes(word))) {
+      return { level: 'approval', reason: 'consequential_or_auth_action' };
+    }
+
+    return { level: 'safe', reason: 'ordinary_keyboard_interaction' };
+  }
+
+  if (action.type === 'click') {
     if (HIGH_RISK_WORDS.some((word) => context.includes(word))) {
       return { level: 'approval', reason: 'consequential_or_auth_action' };
     }
