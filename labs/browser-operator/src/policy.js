@@ -69,6 +69,18 @@ export function assessActionRisk(action, element = null) {
     return { level: 'safe', reason: 'non_mutating_browser_action' };
   }
 
+  if (element?.type === 'file') {
+    return { level: 'deny', reason: 'file_upload_unsupported' };
+  }
+
+  if (action.type === 'click' && element?.download) {
+    return { level: 'deny', reason: 'download_unsupported' };
+  }
+
+  if (action.type === 'click' && element?.href && !isAllowedNavigation(element.href)) {
+    return { level: 'deny', reason: 'unsupported_link_scheme' };
+  }
+
   const context = normalizeText([
     action.type,
     element?.text,
