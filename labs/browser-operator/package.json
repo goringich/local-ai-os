@@ -1,0 +1,13 @@
+{
+  "name": "@local-ai-os/browser-operator",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "start": "node src/cli.js",
+    "check": "node --check src/cli.js && node --check src/operator.js && node --check src/ollama.js && node --check src/policy.js && node --check src/snapshot.js && node --test"
+  },
+  "dependencies": {
+    "playwright": "1.62.1"
+  }
+}
