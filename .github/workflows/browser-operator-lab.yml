@@ -26,8 +26,7 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: 24
-          cache: npm
-          cache-dependency-path: labs/browser-operator/package.json
+          package-manager-cache: false
       - name: Install dependencies without browser binaries
         run: npm install --ignore-scripts --package-lock=false
       - name: Run syntax and policy checks
