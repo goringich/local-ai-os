@@ -37,6 +37,7 @@ export async function buildSnapshot(page) {
         name: element.getAttribute('name') ?? '',
         placeholder: element.getAttribute('placeholder') ?? '',
         href: element instanceof HTMLAnchorElement ? element.href : '',
+        download: element instanceof HTMLAnchorElement && element.hasAttribute('download'),
         value: element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement
           ? element.value.slice(0, 120)
           : ''
