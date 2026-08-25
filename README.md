@@ -12,6 +12,14 @@ Live site: [goringich.github.io/local-ai-os](https://goringich.github.io/local-a
 
 Every route is emitted as a static `index.html` route artifact during the Vite build, so direct GitHub Pages refreshes work without a server-side router.
 
+## Labs
+
+Experimental capabilities live under `labs/` and are kept separate from product-ready claims.
+
+- [`labs/browser-operator`](./labs/browser-operator/) — executable local-first browser agent using Playwright + Ollama with bounded page snapshots, an isolated browser context, and explicit approval before consequential actions.
+
+A lab is not considered an adopted product capability until representative benchmark, safety, recovery, privacy and outcome gates pass.
+
 ## Public repository versus delivery
 
 This repository is a public product surface, not the complete LOCAL AI OS installation.
