@@ -1,5 +1,18 @@
 const DEFAULT_OLLAMA_URL = 'http://127.0.0.1:11434';
 
+export function isLoopbackOllamaUrl(value) {
+  try {
+    const parsed = new URL(value);
+    const host = parsed.hostname.toLowerCase();
+    const loopbackHost = host === '127.0.0.1'
+      || host === 'localhost'
+      || host === '::1';
+    return parsed.protocol === 'http:' && loopbackHost;
+  } catch {
+    return false;
+  }
+}
+
 function extractJson(content) {
   const trimmed = String(content ?? '').trim();
   const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i);
@@ -15,6 +28,10 @@ function extractJson(content) {
 }
 
 export async function nextAction({ model, task, snapshot, history, ollamaUrl = DEFAULT_OLLAMA_URL }) {
+  if (!isLoopbackOllamaUrl(ollamaUrl)) {
+    throw new Error('Ollama endpoint must be local loopback HTTP');
+  }
+
   const system = `You are a browser-control planner. Return exactly one JSON object and no prose.
 
 Allowed actions:
