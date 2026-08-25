@@ -6,7 +6,7 @@ export function isLoopbackOllamaUrl(value) {
     const host = parsed.hostname.toLowerCase();
     const loopbackHost = host === '127.0.0.1'
       || host === 'localhost'
-      || host === '::1';
+      || host === '[::1]';
     return parsed.protocol === 'http:' && loopbackHost;
   } catch {
     return false;
