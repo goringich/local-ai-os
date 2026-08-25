@@ -5,6 +5,10 @@ import { assessActionRisk, isAllowedNavigation } from '../src/policy.js';
 test('allows ordinary http navigation', () => {
   assert.equal(isAllowedNavigation('https://example.com'), true);
   assert.equal(isAllowedNavigation('http://localhost:3000'), true);
+  assert.equal(
+    assessActionRisk({ type: 'goto', url: 'https://example.com' }).level,
+    'safe'
+  );
 });
 
 test('denies non-http navigation', () => {
@@ -23,7 +27,7 @@ test('requires approval for purchases and submission-like clicks', () => {
   );
   const submit = assessActionRisk(
     { type: 'click', elementId: 'op-2' },
-    { text: 'Submit application', type: 'submit' }
+    { text: 'Continue', type: 'submit' }
   );
 
   assert.equal(purchase.level, 'approval');
@@ -40,11 +44,24 @@ test('requires approval for sensitive fields', () => {
   assert.equal(result.reason, 'sensitive_field');
 });
 
-test('allows ordinary search input', () => {
+test('allows ordinary search input and search enter', () => {
+  const element = { name: 'q', placeholder: 'Search', type: 'search' };
+  assert.equal(
+    assessActionRisk({ type: 'fill', elementId: 'op-4', text: 'playwright docs' }, element).level,
+    'safe'
+  );
+  assert.equal(
+    assessActionRisk({ type: 'press', elementId: 'op-4', key: 'Enter' }, element).level,
+    'safe'
+  );
+});
+
+test('requires approval when enter may submit an ordinary form', () => {
   const result = assessActionRisk(
-    { type: 'fill', elementId: 'op-4', text: 'playwright docs' },
-    { name: 'q', placeholder: 'Search', type: 'search' }
+    { type: 'press', elementId: 'op-5', key: 'Enter' },
+    { name: 'message', type: 'text' }
   );
 
-  assert.equal(result.level, 'safe');
+  assert.equal(result.level, 'approval');
+  assert.equal(result.reason, 'enter_may_submit_form');
 });
