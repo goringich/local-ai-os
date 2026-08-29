@@ -12,6 +12,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 import sys
 import tempfile
@@ -25,6 +26,7 @@ MANAGED_ROOT_SCHEMA = "2026-08-30.local-ai-os-managed-root.v1"
 RELEASE_SCHEMA = "2026-08-30.local-ai-os-release.v1"
 ENTITLEMENT_SCHEMA = "2026-08-30.local-ai-os-entitlement.v1"
 FACTS_SCHEMA = "2026-08-30.local-ai-os-compatibility.v1"
+VERSION_RE = re.compile(r"^[0-9A-Za-z][0-9A-Za-z._+-]{0,63}$")
 
 
 class PackageError(RuntimeError):
@@ -69,6 +71,23 @@ def full_sha(value: Any, length: int) -> bool:
   return len(raw) == length and all(char in "0123456789abcdef" for char in raw)
 
 
+def validated_version(value: Any) -> str:
+  version = str(value or "").strip()
+  if not VERSION_RE.fullmatch(version):
+    raise PackageError("release version contains unsafe characters")
+  return version
+
+
+def resolved_within(root: Path, candidate: Path) -> Path:
+  try:
+    resolved_root = root.resolve(strict=True)
+    resolved = candidate.resolve(strict=True)
+    resolved.relative_to(resolved_root)
+  except (OSError, RuntimeError, ValueError) as exc:
+    raise PackageError(f"path escapes managed boundary: {candidate}") from exc
+  return resolved
+
+
 def validate_entitlement(entitlement: Mapping[str, Any], release: Mapping[str, Any]) -> None:
   if entitlement.get("schema_version") != ENTITLEMENT_SCHEMA:
     raise PackageError("unsupported entitlement schema")
@@ -95,9 +114,7 @@ def validate_release(
     raise PackageError("unsupported release manifest schema")
   if release.get("product_id") != PRODUCT_ID:
     raise PackageError("release product mismatch")
-  version = str(release.get("version") or "").strip()
-  if not version:
-    raise PackageError("release version is required")
+  validated_version(release.get("version"))
   source_sha = release.get("source_sha")
   if not full_sha(source_sha, 40):
     raise PackageError("release source_sha must be a full lowercase git SHA")
@@ -118,6 +135,13 @@ def validate_release(
   if signing_status == "verified" and not full_sha(signing.get("receipt_sha256"), 64):
     raise PackageError("verified signing receipt digest is required")
 
+  try:
+    artifact_base = artifact_root.resolve(strict=True)
+  except (OSError, RuntimeError) as exc:
+    raise PackageError("artifact root is unavailable") from exc
+  if artifact_root.is_symlink() or not artifact_base.is_dir():
+    raise PackageError("artifact root must be a real directory")
+
   rows = release.get("artifacts")
   if not isinstance(rows, list) or not rows:
     raise PackageError("release artifacts must be a non-empty list")
@@ -134,8 +158,14 @@ def validate_release(
     if not isinstance(expected_size, int) or expected_size < 0:
       raise PackageError(f"invalid artifact size: {relative}")
     source = artifact_root / relative
-    if not source.is_file() or source.is_symlink():
+    try:
+      resolved_source = source.resolve(strict=True)
+      resolved_source.relative_to(artifact_base)
+    except (OSError, RuntimeError, ValueError) as exc:
+      raise PackageError(f"artifact escapes package root: {relative}") from exc
+    if not resolved_source.is_file() or source.is_symlink():
       raise PackageError(f"artifact missing or unsafe: {relative}")
+    source = resolved_source
     actual_size = source.stat().st_size
     actual_digest = sha256_file(source)
     if actual_size != expected_size:
@@ -198,15 +228,26 @@ def require_managed_root(root: Path) -> dict[str, Any]:
 
 
 def current_state(root: Path) -> dict[str, Any]:
-  return read_json(root / CURRENT)
+  path = root / CURRENT
+  if path.is_symlink():
+    raise PackageError("current release pointer must not be a symlink")
+  return read_json(path)
 
 
 def verify_installed_release(root: Path, version: str) -> dict[str, Any]:
+  version = validated_version(version)
   release_root = root / "releases" / version
+  if release_root.is_symlink():
+    raise PackageError(f"installed release directory is a symlink: {version}")
+  resolved_within(root, release_root)
   manifest_path = release_root / "release-manifest.json"
-  if not manifest_path.is_file():
-    raise PackageError(f"installed release manifest missing: {version}")
+  if not manifest_path.is_file() or manifest_path.is_symlink():
+    raise PackageError(f"installed release manifest missing or unsafe: {version}")
   manifest = read_json(manifest_path)
+  if validated_version(manifest.get("version")) != version:
+    raise PackageError("installed release manifest version mismatch")
+  if manifest.get("product_id") != PRODUCT_ID:
+    raise PackageError("installed release manifest product mismatch")
   rows = manifest.get("artifacts")
   if not isinstance(rows, list) or not rows:
     raise PackageError("installed release artifact inventory missing")
@@ -215,11 +256,15 @@ def verify_installed_release(root: Path, version: str) -> dict[str, Any]:
       raise PackageError("installed artifact row invalid")
     relative = safe_relative(raw.get("path"))
     target = release_root / "artifacts" / relative
-    if not target.is_file() or target.is_symlink():
-      raise PackageError(f"installed artifact missing: {relative}")
-    if target.stat().st_size != raw.get("size"):
+    try:
+      resolved_target = resolved_within(release_root / "artifacts", target)
+    except PackageError as exc:
+      raise PackageError(f"installed artifact escapes release: {relative}") from exc
+    if not resolved_target.is_file() or target.is_symlink():
+      raise PackageError(f"installed artifact missing or unsafe: {relative}")
+    if resolved_target.stat().st_size != raw.get("size"):
       raise PackageError(f"installed artifact size mismatch: {relative}")
-    if sha256_file(target) != raw.get("sha256"):
+    if sha256_file(resolved_target) != raw.get("sha256"):
       raise PackageError(f"installed artifact digest mismatch: {relative}")
   return manifest
 
@@ -240,36 +285,49 @@ def install(
     entitlement,
     allow_synthetic_signature=allow_synthetic_signature,
   )
-  version = str(release["version"])
-  root.mkdir(parents=True, exist_ok=True)
-  marker = root / MARKER
-  if marker.exists():
-    require_managed_root(root)
+  version = validated_version(release["version"])
+  if root.is_symlink():
+    raise PackageError("managed root must not be a symlink")
+  if root.exists():
+    if not root.is_dir():
+      raise PackageError("managed root must be a directory")
+    marker = root / MARKER
+    if marker.exists():
+      require_managed_root(root)
+    else:
+      if any(root.iterdir()):
+        raise PackageError("refusing to adopt a non-empty unmanaged directory")
+      write_json(marker, {
+        "schema_version": MANAGED_ROOT_SCHEMA,
+        "product_id": PRODUCT_ID,
+      })
   else:
+    root.mkdir(parents=True)
+    marker = root / MARKER
     write_json(marker, {
       "schema_version": MANAGED_ROOT_SCHEMA,
       "product_id": PRODUCT_ID,
     })
   release_root = root / "releases" / version
-  if release_root.exists():
-    raise PackageError(f"release already installed: {version}")
+  if release_root.exists() or release_root.is_symlink():
+    raise PackageError(f"release already installed or unsafe: {version}")
   staging = root / "releases" / f".{version}.{os.getpid()}.staging"
-  if staging.exists():
-    shutil.rmtree(staging)
+  if staging.exists() or staging.is_symlink():
+    raise PackageError("staging path already exists")
   artifacts_target = staging / "artifacts"
   artifacts_target.mkdir(parents=True)
   for row in verified:
     relative = Path(row["path"])
     target = artifacts_target / relative
     target.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(artifact_root / relative, target)
+    shutil.copy2((artifact_root / relative).resolve(strict=True), target)
   write_json(staging / "release-manifest.json", release)
   write_json(staging / "entitlement.json", entitlement)
   staging.rename(release_root)
   previous = ""
   current_path = root / CURRENT
   if current_path.is_file():
-    previous = str(current_state(root).get("version") or "")
+    previous = validated_version(current_state(root).get("version"))
   write_json(current_path, {
     "product_id": PRODUCT_ID,
     "version": version,
@@ -279,13 +337,13 @@ def install(
 
 
 def doctor(root: Path) -> dict[str, Any]:
+  if root.is_symlink():
+    raise PackageError("managed root must not be a symlink")
   require_managed_root(root)
   current = current_state(root)
   if current.get("product_id") != PRODUCT_ID:
     raise PackageError("current release product mismatch")
-  version = str(current.get("version") or "")
-  if not version:
-    raise PackageError("current release version is missing")
+  version = validated_version(current.get("version"))
   manifest = verify_installed_release(root, version)
   return {
     "status": "pass",
@@ -308,10 +366,9 @@ def acceptance(root: Path) -> dict[str, Any]:
 
 def rollback(root: Path, version: str) -> dict[str, Any]:
   require_managed_root(root)
+  version = validated_version(version)
   current = current_state(root)
-  current_version = str(current.get("version") or "")
-  if not current_version:
-    raise PackageError("current version is missing")
+  current_version = validated_version(current.get("version"))
   verify_installed_release(root, version)
   write_json(root / CURRENT, {
     "product_id": PRODUCT_ID,
@@ -322,6 +379,8 @@ def rollback(root: Path, version: str) -> dict[str, Any]:
 
 
 def uninstall(root: Path) -> dict[str, Any]:
+  if root.is_symlink():
+    raise PackageError("managed root must not be a symlink")
   require_managed_root(root)
   resolved = root.resolve(strict=True)
   if resolved == Path(resolved.anchor):
@@ -400,6 +459,28 @@ def selftest() -> dict[str, Any]:
       unmanaged_delete_rejected = True
     else:
       raise PackageError("unmanaged directory unexpectedly passed uninstall guard")
+    nonempty = work / "nonempty"
+    nonempty.mkdir()
+    (nonempty / "keep.txt").write_text("keep\n", encoding="utf-8")
+    try:
+      install(nonempty, *first, allow_synthetic_signature=True)
+    except PackageError:
+      nonempty_adoption_rejected = True
+    else:
+      raise PackageError("non-empty unmanaged directory unexpectedly became managed")
+    malicious_release = read_json(first[1])
+    malicious_release["version"] = "../escape"
+    try:
+      validate_release(
+        malicious_release,
+        first[0],
+        read_json(first[2]),
+        allow_synthetic_signature=True,
+      )
+    except PackageError:
+      unsafe_version_rejected = True
+    else:
+      raise PackageError("unsafe release version unexpectedly passed validation")
     first_result = install(root, *first, allow_synthetic_signature=True)
     if first_result["version"] != "0.0.1-test":
       raise PackageError("first synthetic install failed")
@@ -422,6 +503,8 @@ def selftest() -> dict[str, Any]:
       "signature_evidence": "synthetic_test_only",
       "synthetic_rejected_without_flag": synthetic_rejected_without_flag,
       "unmanaged_delete_rejected": unmanaged_delete_rejected,
+      "nonempty_adoption_rejected": nonempty_adoption_rejected,
+      "unsafe_version_rejected": unsafe_version_rejected,
       "production_acceptance": "unknown",
     }
 
