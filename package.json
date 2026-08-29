@@ -17,7 +17,7 @@
     "promo:render": "python3 scripts/render-promo-video.py --format all",
     "check:routes": "node scripts/check-routes.mjs",
     "check:ui": "node scripts/check-ui.mjs",
-    "check:customer-package": "python3 scripts/customer-package.py selftest && python3 scripts/customer-package.py compatibility --facts tests/fixtures/customer-package/supported-linux.json && python3 scripts/customer-package.py compatibility --facts tests/fixtures/customer-package/unsupported-platform.json",
+    "check:customer-package": "python3 scripts/customer-package.py selftest && python3 scripts/customer-package-secure.py selftest && python3 scripts/customer-package-secure.py compatibility --facts tests/fixtures/customer-package/supported-linux.json && python3 scripts/customer-package-secure.py compatibility --facts tests/fixtures/customer-package/unsupported-platform.json",
     "qa:product-standard": "node scripts/check-product-standard.mjs",
     "qa:product-standard:host": "python /home/goringich/__home_organized/local-codex-stack/scripts/product_operating_standard.py doctor --repo . --format json",
     "docs:sync": "node scripts/sync-obsidian-docs.mjs",
