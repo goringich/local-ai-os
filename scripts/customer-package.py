@@ -24,6 +24,8 @@ RELEASE_SCHEMA = "2026-08-30.local-ai-os-release.v1"
 ENTITLEMENT_SCHEMA = "2026-08-30.local-ai-os-entitlement.v1"
 FACTS_SCHEMA = "2026-08-30.local-ai-os-compatibility.v1"
 VERSION_RE = re.compile(r"^[0-9A-Za-z][0-9A-Za-z._+-]{0,63}$")
+ARTIFACT_KINDS = {"payload", "sbom", "provenance"}
+REQUIRED_ARTIFACT_KINDS = {"payload", "sbom", "provenance"}
 
 
 class PackageError(RuntimeError):
@@ -239,15 +241,23 @@ def validate_release(
     raise PackageError("release artifacts must be a non-empty list")
   verified = []
   kinds = set()
+  seen_paths = set()
   for raw in rows:
     if not isinstance(raw, Mapping):
       raise PackageError("artifact row must be an object")
     relative = safe_relative(raw.get("path"))
+    relative_text = str(relative)
+    if relative_text in seen_paths:
+      raise PackageError(f"duplicate artifact path: {relative}")
+    seen_paths.add(relative_text)
+    kind = str(raw.get("kind") or "").strip()
+    if kind not in ARTIFACT_KINDS:
+      raise PackageError(f"unknown artifact kind: {kind or '<empty>'}")
     expected_digest = str(raw.get("sha256") or "")
     expected_size = raw.get("size")
     if not is_hex(expected_digest, 64):
       raise PackageError(f"invalid artifact digest: {relative}")
-    if not isinstance(expected_size, int) or expected_size < 0:
+    if not isinstance(expected_size, int) or isinstance(expected_size, bool) or expected_size < 0:
       raise PackageError(f"invalid artifact size: {relative}")
     source = resolved_within(artifact_root, artifact_root / relative)
     if not source.is_file() or (artifact_root / relative).is_symlink():
@@ -257,18 +267,16 @@ def validate_release(
     actual_digest = sha256_file(source)
     if actual_digest != expected_digest:
       raise PackageError(f"artifact digest mismatch: {relative}")
-    kind = str(raw.get("kind") or "payload")
     kinds.add(kind)
     verified.append({
-      "path": str(relative),
+      "path": relative_text,
       "kind": kind,
       "size": expected_size,
       "sha256": actual_digest,
     })
-  if "sbom" not in kinds:
-    raise PackageError("release must include an SBOM/equivalent inventory artifact")
-  if "provenance" not in kinds:
-    raise PackageError("release must include a provenance artifact")
+  missing_kinds = sorted(REQUIRED_ARTIFACT_KINDS - kinds)
+  if missing_kinds:
+    raise PackageError(f"release is missing required artifact kinds: {','.join(missing_kinds)}")
   return verified
 
 
@@ -306,15 +314,34 @@ def verify_installed(root: Path, version: str) -> dict[str, Any]:
   if not isinstance(rows, list) or not rows:
     raise PackageError("installed release inventory is missing")
   artifact_root = release_root / "artifacts"
+  kinds = set()
+  seen_paths = set()
   for raw in rows:
     if not isinstance(raw, Mapping):
       raise PackageError("installed artifact row is invalid")
     relative = safe_relative(raw.get("path"))
+    relative_text = str(relative)
+    if relative_text in seen_paths:
+      raise PackageError(f"duplicate installed artifact path: {relative}")
+    seen_paths.add(relative_text)
+    kind = str(raw.get("kind") or "").strip()
+    if kind not in ARTIFACT_KINDS:
+      raise PackageError(f"unknown installed artifact kind: {kind or '<empty>'}")
+    kinds.add(kind)
     target = resolved_within(artifact_root, artifact_root / relative)
     if not target.is_file() or (artifact_root / relative).is_symlink():
       raise PackageError(f"installed artifact missing or unsafe: {relative}")
-    if target.stat().st_size != raw.get("size") or sha256_file(target) != raw.get("sha256"):
+    expected_size = raw.get("size")
+    if not isinstance(expected_size, int) or isinstance(expected_size, bool) or expected_size < 0:
+      raise PackageError(f"invalid installed artifact size: {relative}")
+    expected_digest = str(raw.get("sha256") or "")
+    if not is_hex(expected_digest, 64):
+      raise PackageError(f"invalid installed artifact digest: {relative}")
+    if target.stat().st_size != expected_size or sha256_file(target) != expected_digest:
       raise PackageError(f"installed artifact integrity mismatch: {relative}")
+  missing_kinds = sorted(REQUIRED_ARTIFACT_KINDS - kinds)
+  if missing_kinds:
+    raise PackageError(f"installed release is missing required artifact kinds: {','.join(missing_kinds)}")
   return manifest
 
 
@@ -522,6 +549,41 @@ def selftest() -> dict[str, Any]:
       )
     )
 
+    duplicate_inventory = read_json(first[1])
+    duplicate_row = dict(duplicate_inventory["artifacts"][0])
+    duplicate_row["kind"] = "sbom"
+    duplicate_inventory["artifacts"].append(duplicate_row)
+    duplicate_artifact_path_rejected = expect_blocked(
+      lambda: validate_release(
+        duplicate_inventory,
+        first[0],
+        read_json(first[2]),
+        allow_synthetic_signature=True,
+      )
+    )
+    missing_payload = read_json(first[1])
+    missing_payload["artifacts"] = [
+      row for row in missing_payload["artifacts"] if row.get("kind") != "payload"
+    ]
+    missing_payload_rejected = expect_blocked(
+      lambda: validate_release(
+        missing_payload,
+        first[0],
+        read_json(first[2]),
+        allow_synthetic_signature=True,
+      )
+    )
+    unknown_kind = read_json(first[1])
+    unknown_kind["artifacts"][0]["kind"] = "executable"
+    unknown_artifact_kind_rejected = expect_blocked(
+      lambda: validate_release(
+        unknown_kind,
+        first[0],
+        read_json(first[2]),
+        allow_synthetic_signature=True,
+      )
+    )
+
     signed_artifacts, signed_manifest_path, signed_entitlement_path = synthetic_release(
       work,
       "0.0.3-signed-test",
@@ -586,6 +648,9 @@ def selftest() -> dict[str, Any]:
       "unmanaged_delete_rejected": unmanaged_delete_rejected,
       "nonempty_adoption_rejected": nonempty_adoption_rejected,
       "unsafe_version_rejected": unsafe_version_rejected,
+      "duplicate_artifact_path_rejected": duplicate_artifact_path_rejected,
+      "missing_payload_rejected": missing_payload_rejected,
+      "unknown_artifact_kind_rejected": unknown_artifact_kind_rejected,
       "ed25519_signature_verified": True,
       "tampered_signature_rejected": tampered_signature_rejected,
       "production_acceptance": "unknown",
