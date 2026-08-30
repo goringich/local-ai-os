@@ -1,0 +1,102 @@
+{
+  "schema_version": "2026-08-30.local-ai-os-customer-package-contract.v5",
+  "status": "source_contract_only",
+  "product_id": "local-ai-os",
+  "purpose": "Define a deterministic customer-package boundary for compatibility, signed entitlement, signed release verification, pinned trust continuity, installation, diagnostics, acceptance, rollback and uninstall without representing source tests as production readiness.",
+  "interfaces": {
+    "compatibility": "python3 scripts/customer-package-secure.py compatibility --facts <compatibility.json>",
+    "verify": "python3 scripts/customer-package-secure.py verify --artifacts <dir> --manifest <release.json> --entitlement <entitlement.json> --release-public-key <trusted-release-ed25519-public-key.pem> --entitlement-signatures <dir> --entitlement-public-key <trusted-entitlement-ed25519-public-key.pem>",
+    "install": "python3 scripts/customer-package-secure.py install --root <managed-root> --artifacts <dir> --manifest <release.json> --entitlement <entitlement.json> --release-public-key <trusted-release-ed25519-public-key.pem> --entitlement-signatures <dir> --entitlement-public-key <trusted-entitlement-ed25519-public-key.pem>",
+    "doctor": "python3 scripts/customer-package-secure.py doctor --root <managed-root>",
+    "acceptance": "python3 scripts/customer-package-secure.py acceptance --root <managed-root>",
+    "rollback": "python3 scripts/customer-package-secure.py rollback --root <managed-root> --to <installed-version>",
+    "uninstall": "python3 scripts/customer-package-secure.py uninstall --root <managed-root>"
+  },
+  "source_test_harness": {
+    "entrypoint": "python3 scripts/customer-package.py selftest",
+    "production_install_interface": false,
+    "synthetic_signature_mode": "internal_selftest_only",
+    "rule": "The low-level harness is not a customer lifecycle interface. Customer verify/install/doctor/acceptance/rollback/uninstall operations belong to the secure entrypoint; synthetic fixtures remain internal to deterministic source tests."
+  },
+  "compatibility": {
+    "schema": "2026-08-30.local-ai-os-compatibility.v1",
+    "supported_os": ["linux"],
+    "supported_arch": ["x86_64", "aarch64"],
+    "minimum_free_mb": 1024,
+    "unknown_runtime_is_supported": false
+  },
+  "release_manifest": {
+    "schema": "2026-08-30.local-ai-os-release.v1",
+    "required": ["product_id", "version", "source_sha", "artifacts", "signing"],
+    "artifact_required": ["path", "kind", "sha256", "size"],
+    "allowed_artifact_kinds": ["payload", "sbom", "provenance"],
+    "required_artifact_kinds": ["payload", "sbom", "provenance"],
+    "artifact_paths_unique": true,
+    "one_path_cannot_satisfy_multiple_required_kinds": true,
+    "source_sha": "full 40-character lowercase git SHA",
+    "artifact_digest": "sha256"
+  },
+  "release_signing": {
+    "production_status": "signed",
+    "production_algorithm": "ed25519",
+    "production_requires": ["algorithm", "key_id", "signature_path", "trusted public key supplied outside the untrusted release manifest"],
+    "key_id": "sha256:<sha256 of the independently supplied trusted release public-key file>",
+    "canonical_payload": "UTF-8 JSON of the release manifest with sorted keys and compact separators after removing signing.signature_path",
+    "verification_engine": "openssl pkeyutl Ed25519 verification",
+    "private_signing_keys_in_public_repository": false
+  },
+  "entitlement": {
+    "schema": "2026-08-30.local-ai-os-entitlement.v1",
+    "required": ["product_id", "entitlement_id", "sku", "release_version", "status", "signing"],
+    "accepted_status": "active",
+    "issuance_authority": "external payment/licensing authority outside this public source repository",
+    "production_signing_status": "signed",
+    "production_signing_algorithm": "ed25519",
+    "key_id": "sha256:<sha256 of the independently supplied trusted entitlement public-key file>",
+    "canonical_payload": "UTF-8 JSON of the entitlement with sorted keys and compact separators after removing signing.signature_path",
+    "forged_unsigned_json_is_entitlement": false,
+    "rule": "A structurally valid active JSON object is not an entitlement unless its detached Ed25519 signature verifies against the independently trusted entitlement public key."
+  },
+  "managed_install": {
+    "ownership_marker": ".local-ai-os-managed-root",
+    "ownership_marker_alone_proves_adoptable_managed_state": false,
+    "version_layout": "releases/<version>",
+    "current_pointer": "current.json",
+    "trust_anchor_directory": ".trust-anchors",
+    "trust_anchor_contains": ["pinned release public key", "pinned entitlement public key", "fingerprint receipt"],
+    "first_secure_install_pins_trust_anchors": true,
+    "implicit_trust_anchor_rotation": false,
+    "trust_anchor_rotation": "explicit migration only",
+    "installed_trust_directory": ".release-trust",
+    "installed_trust_contains": ["release detached signature", "release public key", "entitlement detached signature", "entitlement public key", "verification receipt"],
+    "existing_managed_root_requires_current_pointer_and_real_trust_anchors": true,
+    "marker_only_or_incomplete_managed_root_adoption": false,
+    "incomplete_managed_root_requires_explicit_recovery": true,
+    "doctor_reverifies_release_signature": true,
+    "doctor_reverifies_entitlement_signature": true,
+    "doctor_requires_per_release_keys_to_match_pinned_anchors": true,
+    "secure_install_is_transactional_for_current_pointer": true,
+    "failed_secure_install_restores_previous_current": true,
+    "failed_secure_install_removes_failed_release_payload": true,
+    "failed_first_bootstrap_restores_target_to_preinstall_state": true,
+    "rollback_restores_previous_pointer_if_post_switch_verification_fails": true,
+    "rollback_requires_signed_active_entitlement_for_target_version": true,
+    "secure_uninstall_requires_successful_doctor": true,
+    "secure_uninstall_requires_signed_current_release_and_pinned_anchors": true,
+    "tampered_package_secure_uninstall": false,
+    "unmanaged_nonempty_directory_adoption": false,
+    "release_version_path_traversal": false,
+    "artifact_symlink_escape": false,
+    "rollback_requires_existing_verified_version": true,
+    "filesystem_root_delete": false
+  },
+  "public_private_boundary": {
+    "public": ["schemas", "official verification CLI", "source-only synthetic fixtures", "hash/provenance/SBOM requirements", "signature verification algorithm", "trust-anchor continuity mechanics", "managed-root ownership rules", "recovery semantics"],
+    "customer_only": ["real entitlement", "release artifacts", "release manifest", "detached release signature", "detached entitlement signature", "trusted release public key", "trusted entitlement public key", "customer installation configuration"],
+    "private": ["payment secrets", "release signing private keys", "entitlement signing private keys", "provider credentials", "private implementation tooling", "customer data"]
+  },
+  "truth_boundary": {
+    "source_selftest_can_prove": ["compatibility classification", "artifact hash checking", "distinct required payload/SBOM/provenance inventory", "entitlement-to-release binding", "forged entitlement rejection", "Ed25519 release detached-signature verification", "Ed25519 entitlement detached-signature verification", "public-key fingerprint binding", "trust-anchor substitution rejection", "trust-anchor tamper detection when anchors and receipts do not match", "marker-only managed-root adoption rejection", "transactional recovery after trust persistence failure", "tampered installed entitlement rejection", "secure uninstall rejection after trust failure", "managed install mechanics", "doctor integrity", "rollback mechanics", "guarded uninstall"],
+    "source_selftest_cannot_prove": ["semantic correctness of a real SBOM or provenance statement", "authority of future production signing keys", "secure key rotation ceremony", "tamper resistance against an attacker able to rewrite every file in the managed root", "payment", "real entitlement issuance or revocation", "customer environment compatibility", "installed runtime health", "verified_live", "customer acceptance", "commercial readiness"]
+  }
+}

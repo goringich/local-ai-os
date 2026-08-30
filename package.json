@@ -17,10 +17,11 @@
     "promo:render": "python3 scripts/render-promo-video.py --format all",
     "check:routes": "node scripts/check-routes.mjs",
     "check:ui": "node scripts/check-ui.mjs",
+    "check:customer-package": "python3 scripts/customer-package.py selftest && python3 scripts/customer-package-secure.py selftest && python3 scripts/customer-package-secure.py compatibility --facts tests/fixtures/customer-package/supported-linux.json && python3 scripts/customer-package-secure.py compatibility --facts tests/fixtures/customer-package/unsupported-platform.json",
     "qa:product-standard": "node scripts/check-product-standard.mjs",
     "qa:product-standard:host": "python /home/goringich/__home_organized/local-codex-stack/scripts/product_operating_standard.py doctor --repo . --format json",
     "docs:sync": "node scripts/sync-obsidian-docs.mjs",
-    "qa": "npm run release:status && npm run docs:build && npm run check:offer && npm run check:docs && npm run check:proofs && npm run promo:check && npm run check:ui && npm run qa:product-standard && npm run lint && npm run build && npm run check:routes && npm audit --audit-level=high"
+    "qa": "npm run release:status && npm run docs:build && npm run check:offer && npm run check:docs && npm run check:proofs && npm run promo:check && npm run check:ui && npm run qa:product-standard && npm run check:customer-package && npm run lint && npm run build && npm run check:routes && npm audit --audit-level=high"
   },
   "dependencies": {
     "react": "^19.2.0",
