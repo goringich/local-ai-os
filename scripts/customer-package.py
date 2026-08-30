@@ -98,6 +98,19 @@ def resolved_within(root: Path, candidate: Path) -> Path:
   return resolved
 
 
+def managed_releases_root(root: Path, *, create: bool) -> Path:
+  path = root / "releases"
+  if path.is_symlink():
+    raise PackageError("managed releases directory must not be a symlink")
+  if not path.exists():
+    if not create:
+      raise PackageError("managed releases directory is missing")
+    path.mkdir()
+  if not path.is_dir():
+    raise PackageError("managed releases directory must be a real directory")
+  return resolved_within(root, path)
+
+
 def compatibility(facts: Mapping[str, Any]) -> dict[str, Any]:
   if facts.get("schema_version") != FACTS_SCHEMA:
     raise PackageError("unsupported compatibility facts schema")
@@ -308,7 +321,8 @@ def current_state(root: Path) -> dict[str, Any]:
 
 def verify_installed(root: Path, version: str) -> dict[str, Any]:
   version = safe_version(version)
-  release_root = root / "releases" / version
+  releases = managed_releases_root(root, create=False)
+  release_root = releases / version
   if release_root.is_symlink():
     raise PackageError("installed release directory must not be a symlink")
   resolved_within(root, release_root)
@@ -394,10 +408,11 @@ def install(
       "product_id": PRODUCT_ID,
     })
 
-  release_root = root / "releases" / version
+  releases = managed_releases_root(root, create=True)
+  release_root = releases / version
   if release_root.exists() or release_root.is_symlink():
     raise PackageError(f"release already installed or unsafe: {version}")
-  staging = root / "releases" / f".{version}.{os.getpid()}.staging"
+  staging = releases / f".{version}.{os.getpid()}.staging"
   if staging.exists() or staging.is_symlink():
     raise PackageError("staging path already exists")
   target_root = staging / "artifacts"
@@ -549,6 +564,20 @@ def selftest() -> dict[str, Any]:
     nonempty_adoption_rejected = expect_blocked(
       lambda: install(nonempty, *first, allow_synthetic_signature=True)
     )
+    symlink_root = work / "symlink-root"
+    symlink_root.mkdir()
+    write_json(symlink_root / MARKER, {
+      "schema_version": MANAGED_SCHEMA,
+      "product_id": PRODUCT_ID,
+    })
+    outside_releases = work / "outside-releases"
+    outside_releases.mkdir()
+    (symlink_root / "releases").symlink_to(outside_releases, target_is_directory=True)
+    symlinked_releases_rejected = expect_blocked(
+      lambda: install(symlink_root, *first, allow_synthetic_signature=True)
+    )
+    if any(outside_releases.iterdir()):
+      raise PackageError("symlinked releases rejection wrote outside managed root")
     malicious = read_json(first[1])
     malicious["version"] = "../escape"
     unsafe_version_rejected = expect_blocked(
@@ -659,6 +688,7 @@ def selftest() -> dict[str, Any]:
       "synthetic_rejected_without_flag": synthetic_rejected,
       "unmanaged_delete_rejected": unmanaged_delete_rejected,
       "nonempty_adoption_rejected": nonempty_adoption_rejected,
+      "symlinked_releases_rejected": symlinked_releases_rejected,
       "unsafe_version_rejected": unsafe_version_rejected,
       "duplicate_artifact_path_rejected": duplicate_artifact_path_rejected,
       "missing_payload_rejected": missing_payload_rejected,
