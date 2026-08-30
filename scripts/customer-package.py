@@ -26,10 +26,18 @@ FACTS_SCHEMA = "2026-08-30.local-ai-os-compatibility.v1"
 VERSION_RE = re.compile(r"^[0-9A-Za-z][0-9A-Za-z._+-]{0,63}$")
 ARTIFACT_KINDS = {"payload", "sbom", "provenance"}
 REQUIRED_ARTIFACT_KINDS = {"payload", "sbom", "provenance"}
+SOURCE_CLI_COMMANDS = {"compatibility", "selftest"}
 
 
 class PackageError(RuntimeError):
   pass
+
+
+def require_source_cli_command(command: str) -> None:
+  if command not in SOURCE_CLI_COMMANDS:
+    raise PackageError(
+      "customer-package.py CLI is source-test-only; use customer-package-secure.py for customer package operations"
+    )
 
 
 def read_json(path: Path) -> dict[str, Any]:
@@ -102,7 +110,7 @@ def compatibility(facts: Mapping[str, Any]) -> dict[str, Any]:
   if facts.get("target_writable") is not True:
     actions.append("choose_writable_install_target")
   free_mb = facts.get("disk_free_mb")
-  if not isinstance(free_mb, int) or free_mb < 1024:
+  if not isinstance(free_mb, int) or isinstance(free_mb, bool) or free_mb < 1024:
     actions.append("free_at_least_1024_mb")
   result = "unsupported" if blockers else ("needs_action" if actions else "supported")
   return {
@@ -526,6 +534,9 @@ def selftest() -> dict[str, Any]:
     first = synthetic_release(work, "0.0.1-test", "a")
     second = synthetic_release(work, "0.0.2-test", "b")
 
+    low_level_customer_operation_rejected = expect_blocked(
+      lambda: require_source_cli_command("install")
+    )
     synthetic_rejected = expect_blocked(
       lambda: validate_release(read_json(first[1]), first[0], read_json(first[2]))
     )
@@ -644,6 +655,7 @@ def selftest() -> dict[str, Any]:
       "rollback": rollback_result["version"],
       "acceptance": acceptance_result["acceptance"],
       "uninstall": uninstall_result["status"],
+      "low_level_customer_operation_rejected": low_level_customer_operation_rejected,
       "synthetic_rejected_without_flag": synthetic_rejected,
       "unmanaged_delete_rejected": unmanaged_delete_rejected,
       "nonempty_adoption_rejected": nonempty_adoption_rejected,
@@ -694,35 +706,10 @@ def main() -> int:
   uninstall_parser.add_argument("--root", type=Path, required=True)
   sub.add_parser("selftest")
   args = parser.parse_args()
+  require_source_cli_command(args.command)
 
   if args.command == "compatibility":
     print_json(compatibility(read_json(args.facts)))
-  elif args.command == "verify":
-    rows = validate_release(
-      read_json(args.manifest),
-      args.artifacts,
-      read_json(args.entitlement),
-      allow_synthetic_signature=args.allow_synthetic_signature,
-      public_key=args.public_key,
-    )
-    print_json({"status": "pass", "artifacts_verified": len(rows), "runtime_and_live": "unknown"})
-  elif args.command == "install":
-    print_json(install(
-      args.root,
-      args.artifacts,
-      args.manifest,
-      args.entitlement,
-      allow_synthetic_signature=args.allow_synthetic_signature,
-      public_key=args.public_key,
-    ))
-  elif args.command == "doctor":
-    print_json(doctor(args.root))
-  elif args.command == "acceptance":
-    print_json(acceptance(args.root))
-  elif args.command == "rollback":
-    print_json(rollback(args.root, args.to))
-  elif args.command == "uninstall":
-    print_json(uninstall(args.root))
   else:
     print_json(selftest())
   return 0
