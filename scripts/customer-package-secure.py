@@ -392,11 +392,61 @@ def _current_before_install(root: Path) -> dict[str, Any] | None:
   return base.current_state(root)
 
 
+def _install_root_state(root: Path) -> dict[str, Any]:
+  if root.is_symlink():
+    raise base.PackageError("managed root must not be a symlink")
+  if not root.exists():
+    return {
+      "preexisting": False,
+      "empty_unmanaged": False,
+      "previous_current": None,
+      "anchors_preexisting": False,
+    }
+  if not root.is_dir():
+    raise base.PackageError("managed root must be a directory")
+
+  entries = list(root.iterdir())
+  marker = root / base.MARKER
+  if not marker.exists():
+    if entries:
+      raise base.PackageError("refusing to adopt a non-empty unmanaged directory")
+    return {
+      "preexisting": True,
+      "empty_unmanaged": True,
+      "previous_current": None,
+      "anchors_preexisting": False,
+    }
+
+  base.require_managed_root(root)
+  current_path = root / base.CURRENT
+  if current_path.is_symlink():
+    raise base.PackageError("current release pointer must not be a symlink")
+  if not current_path.is_file():
+    raise base.PackageError(
+      "existing managed marker without a current release is incomplete; explicit recovery is required"
+    )
+  previous_current = base.current_state(root)
+  anchors = root / ANCHOR_DIR
+  if anchors.is_symlink() or not anchors.is_dir():
+    raise base.PackageError(
+      "existing managed root without real trust anchors is incomplete; explicit recovery is required"
+    )
+  return {
+    "preexisting": True,
+    "empty_unmanaged": False,
+    "previous_current": previous_current,
+    "anchors_preexisting": True,
+  }
+
+
 def _cleanup_failed_install(
   root: Path,
   version: str,
   previous_current: Mapping[str, Any] | None,
   anchors_preexisting: bool,
+  *,
+  root_preexisting: bool,
+  root_was_empty_unmanaged: bool,
 ) -> None:
   if not root.exists() or root.is_symlink():
     return
@@ -428,6 +478,26 @@ def _cleanup_failed_install(
       raise base.PackageError("cannot safely recover symlinked trust anchors")
     shutil.rmtree(base.resolved_within(root, anchor_root))
 
+  if previous_current is None:
+    releases_root = root / "releases"
+    if releases_root.exists():
+      if releases_root.is_symlink() or not releases_root.is_dir():
+        raise base.PackageError("cannot safely recover an unsafe releases directory")
+      base.resolved_within(root, releases_root)
+      if not any(releases_root.iterdir()):
+        releases_root.rmdir()
+    marker = root / base.MARKER
+    if marker.is_symlink():
+      raise base.PackageError("cannot safely recover a symlinked ownership marker")
+    if marker.is_file():
+      marker.unlink()
+    if not root_preexisting:
+      if any(root.iterdir()):
+        raise base.PackageError("new managed root recovery left unexpected files behind")
+      root.rmdir()
+    elif root_was_empty_unmanaged and any(root.iterdir()):
+      raise base.PackageError("empty target recovery left unexpected files behind")
+
 
 def install(
   root: Path,
@@ -449,16 +519,10 @@ def install(
     entitlement_public_key,
   )
   version = base.safe_version(release.get("version"))
-  previous_current = _current_before_install(root)
-  anchors_preexisting = root.exists() and (root / ANCHOR_DIR).is_dir() and not (root / ANCHOR_DIR).is_symlink()
+  root_state = _install_root_state(root)
+  previous_current = root_state["previous_current"]
+  anchors_preexisting = bool(root_state["anchors_preexisting"])
   if previous_current is not None:
-    ensure_trust_anchors(
-      root,
-      release_public_key,
-      entitlement_public_key,
-      allow_create=False,
-    )
-  elif anchors_preexisting:
     ensure_trust_anchors(
       root,
       release_public_key,
@@ -478,7 +542,7 @@ def install(
       root,
       release_public_key,
       entitlement_public_key,
-      allow_create=previous_current is None and not anchors_preexisting,
+      allow_create=previous_current is None,
     )
     persist_trust(
       root,
@@ -497,6 +561,8 @@ def install(
         version,
         previous_current,
         anchors_preexisting,
+        root_preexisting=bool(root_state["preexisting"]),
+        root_was_empty_unmanaged=bool(root_state["empty_unmanaged"]),
       )
     except Exception as cleanup_exc:
       raise base.PackageError(
@@ -552,6 +618,14 @@ def rollback(root: Path, version: str) -> dict[str, Any]:
     raise
 
 
+def uninstall(root: Path) -> dict[str, Any]:
+  verified = doctor(root)
+  result = base.uninstall(root)
+  result["pre_delete_verification"] = "signed_current_release_and_pinned_anchors"
+  result["verified_version"] = verified["version"]
+  return result
+
+
 def _write_payload(path: Path, payload: bytes) -> None:
   path.write_bytes(payload)
 
@@ -559,7 +633,7 @@ def _write_payload(path: Path, payload: bytes) -> None:
 def _sign(private_key: Path, payload: bytes, output: Path) -> None:
   with tempfile.NamedTemporaryFile(prefix="local-ai-os-sign-", delete=False) as handle:
     payload_path = Path(handle.name)
-    handle.write(payload)
+    handle.write(payload_bytes := payload)
   try:
     base.openssl([
       "pkeyutl",
@@ -693,6 +767,25 @@ def selftest() -> dict[str, Any]:
       entitlement_public_key,
     ))
 
+    marker_only = work / "marker-only"
+    marker_only.mkdir()
+    base.write_json(marker_only / base.MARKER, {
+      "schema_version": base.MANAGED_SCHEMA,
+      "product_id": base.PRODUCT_ID,
+    })
+    (marker_only / "keep.txt").write_text("keep\n", encoding="utf-8")
+    marker_only_adoption_rejected = base.expect_blocked(lambda: install(
+      marker_only,
+      first[0],
+      first[1],
+      first[2],
+      release_public_key,
+      first[3],
+      entitlement_public_key,
+    ))
+    if not (marker_only / "keep.txt").is_file():
+      raise base.PackageError("marker-only rejection mutated unrelated target contents")
+
     first_result = install(
       root,
       first[0],
@@ -768,6 +861,9 @@ def selftest() -> dict[str, Any]:
     tampered_entitlement["entitlement_id"] = "tampered-after-install"
     base.write_json(installed_entitlement, tampered_entitlement)
     installed_entitlement_tamper_rejected = base.expect_blocked(lambda: doctor(root))
+    secure_uninstall_tamper_rejected = base.expect_blocked(lambda: uninstall(root))
+    if not root.is_dir():
+      raise base.PackageError("secure uninstall removed a package whose trust verification failed")
     base.write_json(installed_entitlement, original_entitlement)
     doctor(root)
 
@@ -779,7 +875,7 @@ def selftest() -> dict[str, Any]:
     os.chmod(anchor_release_key, 0o600)
     doctor(root)
 
-    uninstall_result = base.uninstall(root)
+    uninstall_result = uninstall(root)
     if root.exists():
       raise base.PackageError("secure synthetic uninstall left managed root behind")
     return {
@@ -789,7 +885,9 @@ def selftest() -> dict[str, Any]:
       "acceptance": acceptance_result["acceptance"],
       "synthetic_release_rejected": synthetic_release_rejected,
       "forged_entitlement_rejected": forged_entitlement_rejected,
+      "marker_only_adoption_rejected": marker_only_adoption_rejected,
       "installed_entitlement_tamper_rejected": installed_entitlement_tamper_rejected,
+      "secure_uninstall_tamper_rejected": secure_uninstall_tamper_rejected,
       "trust_anchor_substitution_rejected": trust_anchor_substitution_rejected,
       "trust_anchor_tamper_rejected": trust_anchor_tamper_rejected,
       "transactional_install_failure_recovered": transactional_install_failure_recovered,
@@ -875,7 +973,7 @@ def main() -> int:
   elif args.command == "rollback":
     print_json(rollback(args.root, args.to))
   elif args.command == "uninstall":
-    print_json(base.uninstall(args.root))
+    print_json(uninstall(args.root))
   else:
     print_json(selftest())
   return 0
