@@ -23,6 +23,9 @@ SPEC.loader.exec_module(base)
 TRUST_DIR = ".release-trust"
 TRUST_RECEIPT = "verification.json"
 TRUST_SCHEMA = "2026-08-30.local-ai-os-installed-trust.v1"
+ANCHOR_DIR = ".trust-anchors"
+ANCHOR_RECEIPT = "anchors.json"
+ANCHOR_SCHEMA = "2026-08-30.local-ai-os-trust-anchors.v1"
 
 
 def _real_file(path: Path, label: str) -> Path:
@@ -170,6 +173,83 @@ def _copy_real_file(source: Path, target: Path, label: str) -> None:
   os.chmod(target, 0o600)
 
 
+def read_trust_anchors(root: Path) -> dict[str, Any]:
+  base.require_managed_root(root)
+  anchor_root = root / ANCHOR_DIR
+  if anchor_root.is_symlink() or not anchor_root.is_dir():
+    raise base.PackageError("managed root trust anchors are missing or unsafe")
+  base.resolved_within(root, anchor_root)
+  receipt_path = anchor_root / ANCHOR_RECEIPT
+  if receipt_path.is_symlink() or not receipt_path.is_file():
+    raise base.PackageError("managed root trust anchor receipt is missing or unsafe")
+  receipt = base.read_json(receipt_path)
+  if receipt.get("schema_version") != ANCHOR_SCHEMA:
+    raise base.PackageError("managed root trust anchor schema mismatch")
+  if receipt.get("product_id") != base.PRODUCT_ID:
+    raise base.PackageError("managed root trust anchor product mismatch")
+  release_key = anchor_root / "release-public-key.pem"
+  entitlement_key = anchor_root / "entitlement-public-key.pem"
+  release_key_id = key_id(release_key)
+  entitlement_key_id = key_id(entitlement_key)
+  if receipt.get("release_key_id") != release_key_id:
+    raise base.PackageError("managed root release trust anchor fingerprint changed")
+  if receipt.get("entitlement_key_id") != entitlement_key_id:
+    raise base.PackageError("managed root entitlement trust anchor fingerprint changed")
+  return {
+    "release_key": release_key,
+    "entitlement_key": entitlement_key,
+    "release_key_id": release_key_id,
+    "entitlement_key_id": entitlement_key_id,
+  }
+
+
+def ensure_trust_anchors(
+  root: Path,
+  release_public_key: Path,
+  entitlement_public_key: Path,
+  *,
+  allow_create: bool,
+) -> dict[str, Any]:
+  supplied_release_key_id = key_id(release_public_key)
+  supplied_entitlement_key_id = key_id(entitlement_public_key)
+  anchor_root = root / ANCHOR_DIR
+  if anchor_root.exists() or anchor_root.is_symlink():
+    anchors = read_trust_anchors(root)
+    if anchors["release_key_id"] != supplied_release_key_id:
+      raise base.PackageError("release trust anchor rotation requires an explicit migration")
+    if anchors["entitlement_key_id"] != supplied_entitlement_key_id:
+      raise base.PackageError("entitlement trust anchor rotation requires an explicit migration")
+    return anchors
+  if not allow_create:
+    raise base.PackageError("managed root trust anchors are missing; explicit migration is required")
+
+  anchor_root.mkdir(mode=0o700)
+  try:
+    _copy_real_file(
+      release_public_key,
+      anchor_root / "release-public-key.pem",
+      "release trust anchor",
+    )
+    _copy_real_file(
+      entitlement_public_key,
+      anchor_root / "entitlement-public-key.pem",
+      "entitlement trust anchor",
+    )
+    base.write_json(anchor_root / ANCHOR_RECEIPT, {
+      "schema_version": ANCHOR_SCHEMA,
+      "product_id": base.PRODUCT_ID,
+      "release_key_id": supplied_release_key_id,
+      "entitlement_key_id": supplied_entitlement_key_id,
+      "rotation": "explicit_migration_only",
+    })
+    os.chmod(anchor_root / ANCHOR_RECEIPT, 0o600)
+    return read_trust_anchors(root)
+  except Exception:
+    if anchor_root.exists() and not anchor_root.is_symlink():
+      shutil.rmtree(anchor_root)
+    raise
+
+
 def persist_trust(
   root: Path,
   release: Mapping[str, Any],
@@ -237,6 +317,7 @@ def verify_installed_trust(root: Path, version: str) -> dict[str, Any]:
   entitlement = base.read_json(entitlement_path)
   base.validate_entitlement(entitlement, release)
 
+  anchors = read_trust_anchors(root)
   trust = release_root / TRUST_DIR
   if trust.is_symlink() or not trust.is_dir():
     raise base.PackageError("installed release trust directory is missing or unsafe")
@@ -260,6 +341,10 @@ def verify_installed_trust(root: Path, version: str) -> dict[str, Any]:
     raise base.PackageError("installed release public key fingerprint changed")
   if receipt.get("entitlement_key_id") != entitlement_key_id:
     raise base.PackageError("installed entitlement public key fingerprint changed")
+  if anchors["release_key_id"] != release_key_id:
+    raise base.PackageError("installed release key does not match managed root trust anchor")
+  if anchors["entitlement_key_id"] != entitlement_key_id:
+    raise base.PackageError("installed entitlement key does not match managed root trust anchor")
 
   release_signing = _signing(release, "release")
   entitlement_signing = _signing(entitlement, "entitlement")
@@ -275,13 +360,13 @@ def verify_installed_trust(root: Path, version: str) -> dict[str, Any]:
   _verify_detached(
     base.canonical_release_bytes(release),
     release_signature,
-    release_key,
+    anchors["release_key"],
     "installed-release",
   )
   _verify_detached(
     canonical_entitlement_bytes(entitlement),
     entitlement_signature,
-    entitlement_key,
+    anchors["entitlement_key"],
     "installed-entitlement",
   )
   return {
@@ -290,6 +375,58 @@ def verify_installed_trust(root: Path, version: str) -> dict[str, Any]:
     "release_key_id": release_key_id,
     "entitlement_key_id": entitlement_key_id,
   }
+
+
+def _current_before_install(root: Path) -> dict[str, Any] | None:
+  if not root.exists() or root.is_symlink():
+    return None
+  marker = root / base.MARKER
+  if not marker.exists():
+    return None
+  base.require_managed_root(root)
+  current_path = root / base.CURRENT
+  if current_path.is_symlink():
+    raise base.PackageError("current release pointer must not be a symlink")
+  if not current_path.exists():
+    return None
+  return base.current_state(root)
+
+
+def _cleanup_failed_install(
+  root: Path,
+  version: str,
+  previous_current: Mapping[str, Any] | None,
+  anchors_preexisting: bool,
+) -> None:
+  if not root.exists() or root.is_symlink():
+    return
+  base.require_managed_root(root)
+  current_path = root / base.CURRENT
+  if current_path.is_symlink():
+    raise base.PackageError("cannot safely recover a symlinked current pointer")
+  if current_path.is_file():
+    current = base.current_state(root)
+    if current.get("version") == version:
+      if previous_current is None:
+        current_path.unlink()
+      else:
+        base.write_json(current_path, previous_current)
+
+  release_root = root / "releases" / version
+  if release_root.exists() or release_root.is_symlink():
+    if release_root.is_symlink():
+      raise base.PackageError("cannot safely recover a symlinked release directory")
+    shutil.rmtree(base.resolved_within(root, release_root))
+  staging = root / "releases" / f".{version}.{os.getpid()}.staging"
+  if staging.exists() or staging.is_symlink():
+    if staging.is_symlink():
+      raise base.PackageError("cannot safely recover a symlinked staging directory")
+    shutil.rmtree(base.resolved_within(root, staging))
+  anchor_root = root / ANCHOR_DIR
+  if not anchors_preexisting and previous_current is None and anchor_root.exists():
+    if anchor_root.is_symlink():
+      raise base.PackageError("cannot safely recover symlinked trust anchors")
+    shutil.rmtree(base.resolved_within(root, anchor_root))
 
 
 def install(
@@ -311,23 +448,61 @@ def install(
     entitlement_signature_root,
     entitlement_public_key,
   )
-  base.install(
-    root,
-    artifacts,
-    manifest_path,
-    entitlement_path,
-    public_key=release_public_key,
-  )
-  persist_trust(
-    root,
-    release,
-    artifacts,
-    entitlement,
-    release_public_key,
-    entitlement_signature_root,
-    entitlement_public_key,
-  )
-  return doctor(root)
+  version = base.safe_version(release.get("version"))
+  previous_current = _current_before_install(root)
+  anchors_preexisting = root.exists() and (root / ANCHOR_DIR).is_dir() and not (root / ANCHOR_DIR).is_symlink()
+  if previous_current is not None:
+    ensure_trust_anchors(
+      root,
+      release_public_key,
+      entitlement_public_key,
+      allow_create=False,
+    )
+  elif anchors_preexisting:
+    ensure_trust_anchors(
+      root,
+      release_public_key,
+      entitlement_public_key,
+      allow_create=False,
+    )
+
+  try:
+    base.install(
+      root,
+      artifacts,
+      manifest_path,
+      entitlement_path,
+      public_key=release_public_key,
+    )
+    ensure_trust_anchors(
+      root,
+      release_public_key,
+      entitlement_public_key,
+      allow_create=previous_current is None and not anchors_preexisting,
+    )
+    persist_trust(
+      root,
+      release,
+      artifacts,
+      entitlement,
+      release_public_key,
+      entitlement_signature_root,
+      entitlement_public_key,
+    )
+    return doctor(root)
+  except Exception as exc:
+    try:
+      _cleanup_failed_install(
+        root,
+        version,
+        previous_current,
+        anchors_preexisting,
+      )
+    except Exception as cleanup_exc:
+      raise base.PackageError(
+        f"secure install failed and recovery was incomplete: {type(cleanup_exc).__name__}"
+      ) from exc
+    raise
 
 
 def doctor(root: Path) -> dict[str, Any]:
@@ -344,8 +519,8 @@ def doctor(root: Path) -> dict[str, Any]:
     "product_id": base.PRODUCT_ID,
     "version": version,
     "source_sha": release.get("source_sha"),
-    "package_integrity": "verified_against_signed_release",
-    "entitlement_integrity": "signed_active_and_release_bound",
+    "package_integrity": "verified_against_signed_release_and_pinned_anchor",
+    "entitlement_integrity": "signed_active_release_bound_and_pinned_anchor",
     "entitlement_id": str(entitlement.get("entitlement_id") or ""),
     "release_key_id": verified["release_key_id"],
     "entitlement_key_id": verified["entitlement_key_id"],
@@ -363,9 +538,18 @@ def acceptance(root: Path) -> dict[str, Any]:
 def rollback(root: Path, version: str) -> dict[str, Any]:
   base.require_managed_root(root)
   version = base.safe_version(version)
+  previous = base.current_state(root)
   verify_installed_trust(root, version)
-  base.rollback(root, version)
-  return doctor(root)
+  try:
+    base.rollback(root, version)
+    return doctor(root)
+  except Exception:
+    current_path = root / base.CURRENT
+    if current_path.is_file() and not current_path.is_symlink():
+      current = base.current_state(root)
+      if current.get("version") == version:
+        base.write_json(current_path, previous)
+    raise
 
 
 def _write_payload(path: Path, payload: bytes) -> None:
@@ -467,6 +651,15 @@ def selftest() -> dict[str, Any]:
       entitlement_private_key,
       entitlement_public_key,
     )
+    third = signed_fixture(
+      work,
+      "0.0.3-secure-test",
+      "c",
+      release_private_key,
+      release_public_key,
+      entitlement_private_key,
+      entitlement_public_key,
+    )
 
     verify_bundle(
       base.read_json(first[1]),
@@ -477,7 +670,7 @@ def selftest() -> dict[str, Any]:
       entitlement_public_key,
     )
 
-    unsigned = base.synthetic_release(work, "0.0.3-unsigned-test", "c")
+    unsigned = base.synthetic_release(work, "0.0.4-unsigned-test", "d")
     synthetic_release_rejected = base.expect_blocked(lambda: verify_bundle(
       base.read_json(unsigned[1]),
       unsigned[0],
@@ -518,6 +711,54 @@ def selftest() -> dict[str, Any]:
       second[3],
       entitlement_public_key,
     )
+
+    alternate_release_private, alternate_release_public = _generate_keypair(work, "alternate-release")
+    alternate_entitlement_private, alternate_entitlement_public = _generate_keypair(work, "alternate-entitlement")
+    alternate = signed_fixture(
+      work,
+      "0.0.5-alternate-key-test",
+      "e",
+      alternate_release_private,
+      alternate_release_public,
+      alternate_entitlement_private,
+      alternate_entitlement_public,
+    )
+    trust_anchor_substitution_rejected = base.expect_blocked(lambda: install(
+      root,
+      alternate[0],
+      alternate[1],
+      alternate[2],
+      alternate_release_public,
+      alternate[3],
+      alternate_entitlement_public,
+    ))
+    if base.current_state(root).get("version") != "0.0.2-secure-test":
+      raise base.PackageError("rejected trust-anchor substitution changed current release")
+
+    original_persist_trust = persist_trust
+
+    def fail_persist_trust(*args, **kwargs):
+      raise base.PackageError("injected trust persistence failure")
+
+    globals()["persist_trust"] = fail_persist_trust
+    try:
+      transactional_install_failure_recovered = base.expect_blocked(lambda: install(
+        root,
+        third[0],
+        third[1],
+        third[2],
+        release_public_key,
+        third[3],
+        entitlement_public_key,
+      ))
+    finally:
+      globals()["persist_trust"] = original_persist_trust
+    if base.current_state(root).get("version") != "0.0.2-secure-test":
+      raise base.PackageError("failed secure install changed current release")
+    if (root / "releases" / "0.0.3-secure-test").exists():
+      raise base.PackageError("failed secure install left release payload behind")
+    doctor(root)
+
     rollback_result = rollback(root, "0.0.1-secure-test")
     acceptance_result = acceptance(root)
 
@@ -528,6 +769,14 @@ def selftest() -> dict[str, Any]:
     base.write_json(installed_entitlement, tampered_entitlement)
     installed_entitlement_tamper_rejected = base.expect_blocked(lambda: doctor(root))
     base.write_json(installed_entitlement, original_entitlement)
+    doctor(root)
+
+    anchor_release_key = root / ANCHOR_DIR / "release-public-key.pem"
+    original_anchor_key = anchor_release_key.read_bytes()
+    anchor_release_key.write_bytes(alternate_release_public.read_bytes())
+    trust_anchor_tamper_rejected = base.expect_blocked(lambda: doctor(root))
+    anchor_release_key.write_bytes(original_anchor_key)
+    os.chmod(anchor_release_key, 0o600)
     doctor(root)
 
     uninstall_result = base.uninstall(root)
@@ -541,6 +790,9 @@ def selftest() -> dict[str, Any]:
       "synthetic_release_rejected": synthetic_release_rejected,
       "forged_entitlement_rejected": forged_entitlement_rejected,
       "installed_entitlement_tamper_rejected": installed_entitlement_tamper_rejected,
+      "trust_anchor_substitution_rejected": trust_anchor_substitution_rejected,
+      "trust_anchor_tamper_rejected": trust_anchor_tamper_rejected,
+      "transactional_install_failure_recovered": transactional_install_failure_recovered,
       "release_key_binding": first_result["release_key_id"],
       "entitlement_key_binding": first_result["entitlement_key_id"],
       "production_acceptance": "unknown",
