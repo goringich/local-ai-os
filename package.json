@@ -41,6 +41,7 @@
     "vite": "^7.1.0"
   },
   "overrides": {
+    "browserslist": "4.28.8",
     "esbuild": "^0.28.1"
   }
 }
