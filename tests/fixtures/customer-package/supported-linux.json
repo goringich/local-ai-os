@@ -1,0 +1,7 @@
+{
+  "schema_version": "2026-08-30.local-ai-os-compatibility.v1",
+  "os": "linux",
+  "arch": "x86_64",
+  "target_writable": true,
+  "disk_free_mb": 8192
+}
