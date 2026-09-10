@@ -1,0 +1,130 @@
+name: Customer Package Artifact Boundary Repair
+
+on:
+  push:
+    branches:
+      - feat/customer-package-current-20260906
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repair branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: feat/customer-package-current-20260906
+
+      - name: Verify repair parent
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          test "$(git rev-parse HEAD^)" = "1d57baba95513d5ceb99ba8469279e49bb14f406"
+          test "$(git diff --name-only HEAD^ HEAD)" = ".github/workflows/customer-package-artifact-root-repair.yml"
+
+      - name: Apply installed artifact boundary repair
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("scripts/customer-package-secure.py")
+          text = path.read_text(encoding="utf-8")
+
+          old = '''def verify_installed_trust(root: Path, version: str) -> dict[str, Any]:
+            version = base.safe_version(version)
+            release = base.verify_installed(root, version)
+            release_root = root / "releases" / version
+            base.resolved_within(root, release_root)
+          '''
+          new = '''def verify_installed_trust(root: Path, version: str) -> dict[str, Any]:
+            version = base.safe_version(version)
+            release_root = root / "releases" / version
+            if release_root.is_symlink() or not release_root.is_dir():
+              raise base.PackageError("installed release directory must be real and inside the managed root")
+            base.resolved_within(root, release_root)
+            artifact_root = release_root / "artifacts"
+            if artifact_root.is_symlink() or not artifact_root.is_dir():
+              raise base.PackageError("installed artifact root must be a real directory")
+            base.resolved_within(release_root, artifact_root)
+            release = base.verify_installed(root, version)
+          '''
+          old = "\n".join(line[10:] if line.startswith("          ") else line for line in old.splitlines()) + "\n"
+          new = "\n".join(line[10:] if line.startswith("          ") else line for line in new.splitlines()) + "\n"
+          if text.count(old) != 1:
+            raise SystemExit("installed trust verifier anchor drifted")
+          text = text.replace(old, new, 1)
+
+          anchor = '    existing_release = root / "releases" / "0.0.2-secure-test"\n'
+          regression_lines = [
+            '    installed_artifacts = root / "releases" / "0.0.2-secure-test" / "artifacts"',
+            '    outside_artifacts = work / "outside-installed-artifacts"',
+            "    installed_artifacts.rename(outside_artifacts)",
+            "    installed_artifacts.symlink_to(outside_artifacts, target_is_directory=True)",
+            "    installed_artifact_root_symlink_rejected = base.expect_blocked(lambda: doctor(root))",
+            "    installed_artifacts.unlink()",
+            "    outside_artifacts.rename(installed_artifacts)",
+            "    doctor(root)",
+            "",
+          ]
+          regression = "\n".join(regression_lines) + "\n"
+          if text.count(anchor) != 1:
+            raise SystemExit("artifact boundary selftest anchor drifted")
+          text = text.replace(anchor, regression + anchor, 1)
+
+          result_anchor = '      "concurrent_uninstall_rejected": concurrent_uninstall_rejected,\n'
+          result = result_anchor + '      "installed_artifact_root_symlink_rejected": installed_artifact_root_symlink_rejected,\n'
+          if text.count(result_anchor) != 1:
+            raise SystemExit("artifact boundary result anchor drifted")
+          text = text.replace(result_anchor, result, 1)
+          path.write_text(text, encoding="utf-8")
+
+          readme = Path("customer-package/README.md")
+          readme_text = readme.read_text(encoding="utf-8")
+          doctor_line = "- deterministic package doctor that re-verifies installed release and entitlement signatures against the pinned managed-root trust anchors and rechecks the installed inventory;\n"
+          doctor_new = "- deterministic package doctor that re-verifies installed release and entitlement signatures against the pinned managed-root trust anchors, rejects a symlinked installed artifact root, and rechecks the installed inventory inside the versioned release boundary;\n"
+          if readme_text.count(doctor_line) != 1:
+            raise SystemExit("README doctor boundary anchor drifted")
+          readme.write_text(readme_text.replace(doctor_line, doctor_new, 1), encoding="utf-8")
+
+          contract_path = Path("customer-package/contract.json")
+          contract = json.loads(contract_path.read_text(encoding="utf-8"))
+          managed = contract["managed_install"]
+          managed["installed_artifact_root_symlink"] = False
+          managed["doctor_requires_real_artifact_root_inside_release"] = True
+          proofs = contract["truth_boundary"]["source_selftest_can_prove"]
+          proof = "installed artifact-root symlink rejection before doctor trusts artifact contents"
+          if proof not in proofs:
+            proofs.append(proof)
+          contract_path.write_text(
+            json.dumps(contract, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+          )
+          PY
+
+      - name: Run focused package verification
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python3 -m py_compile scripts/customer-package-secure.py
+          python3 scripts/customer-package.py selftest
+          python3 scripts/customer-package-secure.py selftest
+          python3 -m json.tool customer-package/contract.json >/dev/null
+          git diff --check
+
+      - name: Commit verified repair and remove temporary workflow
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          rm .github/workflows/customer-package-artifact-root-repair.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add scripts/customer-package-secure.py customer-package/README.md customer-package/contract.json .github/workflows/customer-package-artifact-root-repair.yml
+          git diff --cached --check
+          git commit -m "fix(package): keep installed artifacts inside release boundary"
+          git push origin HEAD:feat/customer-package-current-20260906
