@@ -522,6 +522,15 @@ def install(
   root_state = _install_root_state(root)
   previous_current = root_state["previous_current"]
   anchors_preexisting = bool(root_state["anchors_preexisting"])
+
+  releases_root = root / "releases"
+  release_root = releases_root / version
+  staging = releases_root / f".{version}.{os.getpid()}.staging"
+  if release_root.exists() or release_root.is_symlink():
+    raise base.PackageError(f"release already installed or unsafe: {version}")
+  if staging.exists() or staging.is_symlink():
+    raise base.PackageError("staging path already exists")
+
   if previous_current is not None:
     ensure_trust_anchors(
       root,
@@ -805,6 +814,40 @@ def selftest() -> dict[str, Any]:
       entitlement_public_key,
     )
 
+    existing_release = root / "releases" / "0.0.2-secure-test"
+    existing_manifest = existing_release / "release-manifest.json"
+    existing_manifest_digest = base.sha256_file(existing_manifest)
+    existing_release_reinstall_rejected = base.expect_blocked(lambda: install(
+      root,
+      second[0],
+      second[1],
+      second[2],
+      release_public_key,
+      second[3],
+      entitlement_public_key,
+    ))
+    if not existing_release.is_dir() or base.sha256_file(existing_manifest) != existing_manifest_digest:
+      raise base.PackageError("rejected reinstall mutated a pre-existing release")
+    doctor(root)
+
+    preexisting_staging = root / "releases" / f".0.0.3-secure-test.{os.getpid()}.staging"
+    preexisting_staging.mkdir()
+    staging_sentinel = preexisting_staging / "keep.txt"
+    staging_sentinel.write_text("pre-existing staging must survive rejection\n", encoding="utf-8")
+    preexisting_staging_rejected = base.expect_blocked(lambda: install(
+      root,
+      third[0],
+      third[1],
+      third[2],
+      release_public_key,
+      third[3],
+      entitlement_public_key,
+    ))
+    if not staging_sentinel.is_file():
+      raise base.PackageError("rejected install removed a pre-existing staging directory")
+    shutil.rmtree(preexisting_staging)
+    doctor(root)
+
     alternate_release_private, alternate_release_public = _generate_keypair(work, "alternate-release")
     alternate_entitlement_private, alternate_entitlement_public = _generate_keypair(work, "alternate-entitlement")
     alternate = signed_fixture(
@@ -890,6 +933,8 @@ def selftest() -> dict[str, Any]:
       "secure_uninstall_tamper_rejected": secure_uninstall_tamper_rejected,
       "trust_anchor_substitution_rejected": trust_anchor_substitution_rejected,
       "trust_anchor_tamper_rejected": trust_anchor_tamper_rejected,
+      "existing_release_reinstall_rejected": existing_release_reinstall_rejected,
+      "preexisting_staging_rejected": preexisting_staging_rejected,
       "transactional_install_failure_recovered": transactional_install_failure_recovered,
       "release_key_binding": first_result["release_key_id"],
       "entitlement_key_binding": first_result["entitlement_key_id"],
