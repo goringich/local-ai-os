@@ -5,7 +5,7 @@ import type { Proof } from './proofs/types'
 import ArchitectureBlueprint from './ArchitectureBlueprint'
 import { OwnedPromotionSlot } from './OwnedPromotionSlot'
 
-const TELEGRAM_URL = 'https://t.me/a1gorithms?text=LOCAL%20AI%20OS%20%2F%20proof-cohort%3A%20%D1%85%D0%BE%D1%87%D1%83%20%D0%BF%D0%BE%D0%B4%D0%B0%D1%82%D1%8C%20%D0%BE%D0%B4%D0%B8%D0%BD%20workflow'
+const DIAGNOSTIC_URL = 'https://t.me/a1gorithms?text=LOCAL%20AI%20OS%20%2F%20diagnostic-2026-07%3A%20%D1%85%D0%BE%D1%87%D1%83%20%D1%80%D0%B0%D0%B7%D0%BE%D0%B1%D1%80%D0%B0%D1%82%D1%8C%20%D0%BE%D0%B4%D0%B8%D0%BD%20%D0%BF%D0%BE%D0%B2%D1%82%D0%BE%D1%80%D1%8F%D1%8E%D1%89%D0%B8%D0%B9%D1%81%D1%8F%20workflow'
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, '')
 const portalLinks = [
   ['product', 'Продукт'], ['architecture', 'Архитектура'], ['runtime', 'Runtime'], ['context-memory', 'Context/RAG'],
@@ -37,7 +37,7 @@ function Header({ route }: { route: string }) {
       <a href={routeHref('/security')}>Безопасность</a>
       <a href={routeHref('/docs')}>Docs</a>
     </nav>
-    <a className="header-cta" href={TELEGRAM_URL} target="_blank" rel="noreferrer" onClick={() => track('cohort_cta_click')}>Подать workflow</a>
+    <a className="header-cta" href={DIAGNOSTIC_URL} target="_blank" rel="noreferrer" onClick={() => track('cohort_cta_click')}>Диагностика · 9 900 ₽</a>
   </header>
 }
 
@@ -61,16 +61,39 @@ function ProofSummary({ proof }: { proof: Proof }) {
   </section>
 }
 
+function DiagnosticOffer() {
+  return <section className="section diagnostic-offer" aria-labelledby="diagnostic-offer-title">
+    <div className="section-heading">
+      <span>founder-led diagnostic</span>
+      <div>
+        <h2 id="diagnostic-offer-title">Один повторяющийся workflow. Измеримый baseline. 9 900 ₽.</h2>
+        <p className="offer-lead">До работы фиксируем scope, writable boundaries, decision maker и критерий приёмки. После — отдаём проверяемый результат и письменный acceptance report, а не обещание «полной автономии».</p>
+      </div>
+    </div>
+    <div className="demo-grid">
+      <article><strong>Что разбираем</strong><p>Один повторяющийся Linux или private-AI workflow одного технического владельца: контекст, восстановление, bounded execution или проверяемый handoff.</p></article>
+      <article><strong>Что получает владелец</strong><p>Baseline, ограниченный scope, verification evidence, acceptance report и rollback boundary. Public proof появляется только с отдельного согласия.</p></article>
+      <article><strong>Коммерческий переход</strong><p>Диагностика стоит 9 900 ₽ и полностью засчитывается в пятидневный пилот за 49 900 ₽. Оплата и запуск пока founder-led, не self-service.</p></article>
+    </div>
+    <div className="hero-actions">
+      <a className="button primary" href={DIAGNOSTIC_URL} target="_blank" rel="noreferrer" onClick={() => track('cohort_cta_click')}>Подать workflow на диагностику</a>
+      <a className="button quiet" href={routeHref('/acceptance')}>Посмотреть критерии приёмки</a>
+    </div>
+    <p className="offer-note">Набор ограничен текущей founder-led cohort из трёх технических владельцев. Заявка не является оплатой, а оплата не означает автоматический self-service доступ.</p>
+  </section>
+}
+
 function Home() {
   const [proof, setProof] = useState<Proof | null>(null)
   useEffect(() => { fetch(`${BASE}/proofs/founder-context-control-001.json`).then((r) => r.json()).then(setProof).catch(() => setProof(null)) }, [])
   return <main>
     <section className="hero">
-      <div><span className="eyebrow">private Linux · Codex · owner-controlled</span><h1>Codex получает только нужный контекст, меняет разрешённое и оставляет результат, которому можно доверять.</h1><p>Когда агент заново читает систему, теряет scope или завершает задачу без проверки, LOCAL AI OS задаёт один наблюдаемый контур: контекст, граница записи, проверка, отчёт.</p><div className="hero-actions"><a className="button primary" href={TELEGRAM_URL} target="_blank" rel="noreferrer" onClick={() => track('cohort_cta_click')}>Подать workflow в proof cohort</a><a className="button quiet" href={routeHref('/proofs')}>Смотреть proofs</a></div></div>
+      <div><span className="eyebrow">private Linux · Codex · owner-controlled</span><h1>Codex получает только нужный контекст, меняет разрешённое и оставляет результат, которому можно доверять.</h1><p>Когда агент заново читает систему, теряет scope или завершает задачу без проверки, LOCAL AI OS задаёт один наблюдаемый контур: контекст, граница записи, проверка, отчёт.</p><div className="hero-actions"><a className="button primary" href={DIAGNOSTIC_URL} target="_blank" rel="noreferrer" onClick={() => track('cohort_cta_click')}>Подать workflow на диагностику</a><a className="button quiet" href={routeHref('/proofs')}>Смотреть proofs</a></div></div>
       <aside className="problem-card"><span>Observed failure</span><strong>лишний контекст<br />неверный scope<br />непроверенный handoff</strong><p>Не «универсальная AI OS», а контролируемый workflow для одного повторяющегося задания.</p></aside>
     </section>
     <section className="section"><div className="section-heading"><span>workflow</span><h2>Не магия автономии. Явная цепочка ответственности.</h2></div><Workflow /></section>
     {proof ? <ProofSummary proof={proof} /> : <section className="section"><p>Public-safe proof data unavailable while loading.</p></section>}
+    <DiagnosticOffer />
     <OwnedPromotionSlot />
     <section className="section demo"><div className="section-heading"><span>demo flow</span><h2>Один workflow — от проблемы до evidence.</h2></div><div className="demo-grid"><article><strong>1. Baseline</strong><p>Фиксируем доступные поля до работы. Неснятые данные не оцениваем.</p></article><article><strong>2. Boundaries</strong><p>Определяем релевантный контекст, writable scope и команды проверки.</p></article><article><strong>3. Report</strong><p>Оставляем evidence, ограничения и следующий точный action владельцу.</p></article></div></section>
     <section className="portal-bridge"><span>technical due diligence</span><h2>Полная архитектура не исчезла. Она доступна после результата.</h2><div>{portalLinks.slice(0, 8).map(([id, title]) => <a key={id} href={routeHref(productDocs.find((doc) => doc.id === id)?.route ?? '/product')}>{title} →</a>)}</div></section>
@@ -90,11 +113,11 @@ function ProofPage({ id, index }: { id: string; index: ProofIndex }) {
   if (!index.proofs.some((proof) => proof.id === id)) return <NotFound />
   if (!proof) return <main className="page"><p>Loading proof…</p></main>
   const share = async () => { track('proof_share_click'); const url = window.location.href; if (navigator.share) await navigator.share({ title: proof.title, text: proof.shareText, url }); else await navigator.clipboard?.writeText(url) }
-  return <main className="page proof-page"><span className="eyebrow">{proof.kind} · {proof.capturedAt}</span><h1>{proof.title}</h1><p className="lead">{proof.workflow}</p><div className="proof-actions"><button type="button" onClick={share}>Share proof</button><a href={TELEGRAM_URL} target="_blank" rel="noreferrer" onClick={() => track('cohort_cta_click')}>Подать свой workflow →</a></div><section><h2>Before</h2><div className="metric-grid">{proof.before.map((metric) => <Metric key={metric.label} metric={metric} />)}</div></section><section><h2>Assisted execution</h2><div className="metric-grid">{proof.assisted.map((metric) => <Metric key={metric.label} metric={metric} />)}</div></section><section className="evidence"><h2>Verification evidence</h2>{proof.verification.map((entry) => <article key={entry.label}><span className={`badge ${entry.result}`}>{entry.result}</span><strong>{entry.label}</strong><p>{entry.evidence}</p></article>)}</section><section><h2>Limits and public boundary</h2><ul>{proof.limitations.map((limit) => <li key={limit}>{limit}</li>)}</ul></section></main>
+  return <main className="page proof-page"><span className="eyebrow">{proof.kind} · {proof.capturedAt}</span><h1>{proof.title}</h1><p className="lead">{proof.workflow}</p><div className="proof-actions"><button type="button" onClick={share}>Share proof</button><a href={DIAGNOSTIC_URL} target="_blank" rel="noreferrer" onClick={() => track('cohort_cta_click')}>Подать свой workflow →</a></div><section><h2>Before</h2><div className="metric-grid">{proof.before.map((metric) => <Metric key={metric.label} metric={metric} />)}</div></section><section><h2>Assisted execution</h2><div className="metric-grid">{proof.assisted.map((metric) => <Metric key={metric.label} metric={metric} />)}</div></section><section className="evidence"><h2>Verification evidence</h2>{proof.verification.map((entry) => <article key={entry.label}><span className={`badge ${entry.result}`}>{entry.result}</span><strong>{entry.label}</strong><p>{entry.evidence}</p></article>)}</section><section><h2>Limits and public boundary</h2><ul>{proof.limitations.map((limit) => <li key={limit}>{limit}</li>)}</ul></section></main>
 }
 
 function TechnicalPage({ doc }: { doc: ProductDoc }) {
-  return <main className="page technical-page"><div className="technical-top"><span className="eyebrow">technical portal</span><span className={`badge ${doc.status}`}>{statusLabel(doc.status)}</span></div><h1>{doc.title}</h1><p className="lead">{doc.summary}</p><aside className="portal-nav">{portalLinks.map(([id, label]) => { const page = productDocs.find((item) => item.id === id); return <a className={doc.id === id ? 'is-active' : ''} href={routeHref(page?.route ?? '/product')} key={id}>{label}</a> })}</aside>{doc.id === 'architecture' && <ArchitectureBlueprint />}<div className="doc-blocks">{doc.blocks.map((block) => <section key={block.heading}><h2>{block.heading}</h2><p>{block.body}</p>{block.bullets.length > 0 && <ul>{block.bullets.map((bullet) => <li key={bullet}>{bullet}</li>)}</ul>}</section>)}</div><footer className="page-footer"><a href={routeHref('/proofs')}>Proofs →</a><a href={TELEGRAM_URL} target="_blank" rel="noreferrer" onClick={() => track('cohort_cta_click')}>Подать workflow</a></footer></main>
+  return <main className="page technical-page"><div className="technical-top"><span className="eyebrow">technical portal</span><span className={`badge ${doc.status}`}>{statusLabel(doc.status)}</span></div><h1>{doc.title}</h1><p className="lead">{doc.summary}</p><aside className="portal-nav">{portalLinks.map(([id, label]) => { const page = productDocs.find((item) => item.id === id); return <a className={doc.id === id ? 'is-active' : ''} href={routeHref(page?.route ?? '/product')} key={id}>{label}</a> })}</aside>{doc.id === 'architecture' && <ArchitectureBlueprint />}<div className="doc-blocks">{doc.blocks.map((block) => <section key={block.heading}><h2>{block.heading}</h2><p>{block.body}</p>{block.bullets.length > 0 && <ul>{block.bullets.map((bullet) => <li key={bullet}>{bullet}</li>)}</ul>}</section>)}</div><footer className="page-footer"><a href={routeHref('/proofs')}>Proofs →</a><a href={DIAGNOSTIC_URL} target="_blank" rel="noreferrer" onClick={() => track('cohort_cta_click')}>Подать workflow</a></footer></main>
 }
 
 function NotFound() { return <main className="page"><span className="eyebrow">404</span><h1>Маршрут не найден.</h1><a className="text-link" href={routeHref('/')}>На главную →</a></main> }
