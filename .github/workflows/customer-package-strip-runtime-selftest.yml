@@ -22,6 +22,7 @@ jobs:
         shell: bash
         run: |
           set -Eeuo pipefail
+          git merge-base --is-ancestor adaaa701a3b903ca272875b612ae3da52a6ce2a4 HEAD
           test "$(git diff --name-only HEAD^ HEAD)" = ".github/workflows/customer-package-strip-runtime-selftest.yml"
 
       - name: Separate runtime from synthetic test harness
@@ -43,25 +44,11 @@ jobs:
           text = text[:start] + "\n" + text[end:]
 
           parser_line = '  sub.add_parser("selftest")\n'
-          if text.count(parser_line) != 1:
-            raise SystemExit("secure selftest parser surface drifted")
+          selftest_dispatch = '  else:\n    print_json(selftest())\n'
+          if text.count(parser_line) != 1 or text.count(selftest_dispatch) != 1:
+            raise SystemExit("secure selftest CLI surface drifted")
           text = text.replace(parser_line, "", 1)
-
-          dispatch = '''  elif args.command == "uninstall":
-            print_json(uninstall(args.root))
-          else:
-            print_json(selftest())
-          return 0
-          '''
-          replacement = '''  elif args.command == "uninstall":
-            print_json(uninstall(args.root))
-          return 0
-          '''
-          dispatch = "\n".join(line[10:] if line.startswith("          ") else line for line in dispatch.splitlines()) + "\n"
-          replacement = "\n".join(line[10:] if line.startswith("          ") else line for line in replacement.splitlines()) + "\n"
-          if text.count(dispatch) != 1:
-            raise SystemExit("secure selftest dispatch surface drifted")
-          text = text.replace(dispatch, replacement, 1)
+          text = text.replace(selftest_dispatch, "", 1)
           path.write_text(text, encoding="utf-8")
 
           contract_path = Path("customer-package/contract.json")
