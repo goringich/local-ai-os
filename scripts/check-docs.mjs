@@ -24,7 +24,7 @@ const required = [
   ['growth', 'Status: incubation'],
   ['growth', 'Do not buy traffic for the current product shell'],
   ['growth', 'one narrow external workflow'],
-  ['app', 'proof cohort'],
+  ['app', 'diagnostic-2026-07'],
   ['app', 'bounded context'],
   ['manifest', 'sourceOfTruth'],
   ['manifest', 'codex-orchestrator'],
