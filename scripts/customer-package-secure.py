@@ -532,6 +532,7 @@ def install(
     raise base.PackageError("staging path already exists")
 
   if previous_current is not None:
+    doctor(root)
     ensure_trust_anchors(
       root,
       release_public_key,
@@ -848,6 +849,27 @@ def selftest() -> dict[str, Any]:
     shutil.rmtree(preexisting_staging)
     doctor(root)
 
+    current_entitlement = root / "releases" / "0.0.2-secure-test" / "entitlement.json"
+    current_entitlement_original = base.read_json(current_entitlement)
+    current_entitlement_tampered = dict(current_entitlement_original)
+    current_entitlement_tampered["entitlement_id"] = "tampered-before-update"
+    base.write_json(current_entitlement, current_entitlement_tampered)
+    tampered_current_update_rejected = base.expect_blocked(lambda: install(
+      root,
+      third[0],
+      third[1],
+      third[2],
+      release_public_key,
+      third[3],
+      entitlement_public_key,
+    ))
+    if base.current_state(root).get("version") != "0.0.2-secure-test":
+      raise base.PackageError("rejected update from tampered current state changed current release")
+    if (root / "releases" / "0.0.3-secure-test").exists():
+      raise base.PackageError("rejected update from tampered current state installed a new release")
+    base.write_json(current_entitlement, current_entitlement_original)
+    doctor(root)
+
     alternate_release_private, alternate_release_public = _generate_keypair(work, "alternate-release")
     alternate_entitlement_private, alternate_entitlement_public = _generate_keypair(work, "alternate-entitlement")
     alternate = signed_fixture(
@@ -935,6 +957,7 @@ def selftest() -> dict[str, Any]:
       "trust_anchor_tamper_rejected": trust_anchor_tamper_rejected,
       "existing_release_reinstall_rejected": existing_release_reinstall_rejected,
       "preexisting_staging_rejected": preexisting_staging_rejected,
+      "tampered_current_update_rejected": tampered_current_update_rejected,
       "transactional_install_failure_recovered": transactional_install_failure_recovered,
       "release_key_binding": first_result["release_key_id"],
       "entitlement_key_binding": first_result["entitlement_key_id"],
