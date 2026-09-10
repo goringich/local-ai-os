@@ -17,7 +17,7 @@ The official package path covers:
 - transactional secure install recovery: if trust persistence or post-install verification fails, the previous `current.json` is restored, failed release material is removed, and a failed first bootstrap restores the target to its pre-install state;
 - fail-closed lifecycle serialization: install, rollback and uninstall take a non-blocking exclusive lock on the existing parent directory of the managed root, so overlapping secure mutations are rejected before package state can be changed;
 - secure lifecycle mutation requires the managed-root parent directory to already exist; the secure entrypoint does not create missing parent-directory chains;
-- deterministic package doctor that re-verifies installed release and entitlement signatures against the pinned managed-root trust anchors and rechecks the installed inventory;
+- deterministic package doctor that re-verifies installed release and entitlement signatures against the pinned managed-root trust anchors, rejects a symlinked installed artifact root, and rechecks the installed inventory inside the versioned release boundary;
 - rollback only to an already installed version whose artifacts, release signature and active signed entitlement still verify, with pointer restoration if post-switch verification fails;
 - secure uninstall only after the current package passes the full signed `doctor` path and every installed release plus the managed-root/trust-anchor inventories verify exactly; unexpected files/directories block recursive deletion, so unrelated content is never silently removed.
 

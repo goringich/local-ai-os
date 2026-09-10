@@ -142,7 +142,9 @@
     "secure_uninstall_verifies_all_installed_releases": true,
     "secure_uninstall_requires_exact_managed_inventory": true,
     "unexpected_managed_root_content_blocks_uninstall": true,
-    "unexpected_trust_anchor_content_blocks_uninstall": true
+    "unexpected_trust_anchor_content_blocks_uninstall": true,
+    "installed_artifact_root_symlink": false,
+    "doctor_requires_real_artifact_root_inside_release": true
   },
   "public_private_boundary": {
     "public": [
@@ -195,7 +197,8 @@
       "rollback mechanics",
       "guarded uninstall",
       "overlapping secure install/rollback/uninstall rejection without package-state mutation",
-      "secure uninstall rejection when unexpected managed-root or trust-anchor content would otherwise be recursively deleted"
+      "secure uninstall rejection when unexpected managed-root or trust-anchor content would otherwise be recursively deleted",
+      "installed artifact-root symlink rejection before doctor trusts artifact contents"
     ],
     "source_selftest_cannot_prove": [
       "semantic correctness of a real SBOM or provenance statement",

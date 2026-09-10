@@ -358,9 +358,15 @@ def persist_trust(
 
 def verify_installed_trust(root: Path, version: str) -> dict[str, Any]:
   version = base.safe_version(version)
-  release = base.verify_installed(root, version)
   release_root = root / "releases" / version
+  if release_root.is_symlink() or not release_root.is_dir():
+    raise base.PackageError("installed release directory must be real and inside the managed root")
   base.resolved_within(root, release_root)
+  artifact_root = release_root / "artifacts"
+  if artifact_root.is_symlink() or not artifact_root.is_dir():
+    raise base.PackageError("installed artifact root must be a real directory")
+  base.resolved_within(release_root, artifact_root)
+  release = base.verify_installed(root, version)
 
   entitlement_path = release_root / "entitlement.json"
   if entitlement_path.is_symlink() or not entitlement_path.is_file():
@@ -955,6 +961,15 @@ def selftest() -> dict[str, Any]:
       raise base.PackageError("rejected concurrent install created release payload")
     doctor(root)
 
+    installed_artifacts = root / "releases" / "0.0.2-secure-test" / "artifacts"
+    outside_artifacts = work / "outside-installed-artifacts"
+    installed_artifacts.rename(outside_artifacts)
+    installed_artifacts.symlink_to(outside_artifacts, target_is_directory=True)
+    installed_artifact_root_symlink_rejected = base.expect_blocked(lambda: doctor(root))
+    installed_artifacts.unlink()
+    outside_artifacts.rename(installed_artifacts)
+    doctor(root)
+
     existing_release = root / "releases" / "0.0.2-secure-test"
     existing_manifest = existing_release / "release-manifest.json"
     existing_manifest_digest = base.sha256_file(existing_manifest)
@@ -1116,6 +1131,7 @@ def selftest() -> dict[str, Any]:
       "concurrent_install_rejected": concurrent_install_rejected,
       "concurrent_rollback_rejected": concurrent_rollback_rejected,
       "concurrent_uninstall_rejected": concurrent_uninstall_rejected,
+      "installed_artifact_root_symlink_rejected": installed_artifact_root_symlink_rejected,
       "unexpected_content_uninstall_rejected": unexpected_content_uninstall_rejected,
       "unexpected_anchor_uninstall_rejected": unexpected_anchor_uninstall_rejected,
       "release_key_binding": first_result["release_key_id"],
