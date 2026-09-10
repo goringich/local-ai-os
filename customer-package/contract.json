@@ -20,17 +20,41 @@
   },
   "compatibility": {
     "schema": "2026-08-30.local-ai-os-compatibility.v1",
-    "supported_os": ["linux"],
-    "supported_arch": ["x86_64", "aarch64"],
+    "supported_os": [
+      "linux"
+    ],
+    "supported_arch": [
+      "x86_64",
+      "aarch64"
+    ],
     "minimum_free_mb": 1024,
     "unknown_runtime_is_supported": false
   },
   "release_manifest": {
     "schema": "2026-08-30.local-ai-os-release.v1",
-    "required": ["product_id", "version", "source_sha", "artifacts", "signing"],
-    "artifact_required": ["path", "kind", "sha256", "size"],
-    "allowed_artifact_kinds": ["payload", "sbom", "provenance"],
-    "required_artifact_kinds": ["payload", "sbom", "provenance"],
+    "required": [
+      "product_id",
+      "version",
+      "source_sha",
+      "artifacts",
+      "signing"
+    ],
+    "artifact_required": [
+      "path",
+      "kind",
+      "sha256",
+      "size"
+    ],
+    "allowed_artifact_kinds": [
+      "payload",
+      "sbom",
+      "provenance"
+    ],
+    "required_artifact_kinds": [
+      "payload",
+      "sbom",
+      "provenance"
+    ],
     "artifact_paths_unique": true,
     "one_path_cannot_satisfy_multiple_required_kinds": true,
     "source_sha": "full 40-character lowercase git SHA",
@@ -39,7 +63,12 @@
   "release_signing": {
     "production_status": "signed",
     "production_algorithm": "ed25519",
-    "production_requires": ["algorithm", "key_id", "signature_path", "trusted public key supplied outside the untrusted release manifest"],
+    "production_requires": [
+      "algorithm",
+      "key_id",
+      "signature_path",
+      "trusted public key supplied outside the untrusted release manifest"
+    ],
     "key_id": "sha256:<sha256 of the independently supplied trusted release public-key file>",
     "canonical_payload": "UTF-8 JSON of the release manifest with sorted keys and compact separators after removing signing.signature_path",
     "verification_engine": "openssl pkeyutl Ed25519 verification",
@@ -47,7 +76,14 @@
   },
   "entitlement": {
     "schema": "2026-08-30.local-ai-os-entitlement.v1",
-    "required": ["product_id", "entitlement_id", "sku", "release_version", "status", "signing"],
+    "required": [
+      "product_id",
+      "entitlement_id",
+      "sku",
+      "release_version",
+      "status",
+      "signing"
+    ],
     "accepted_status": "active",
     "issuance_authority": "external payment/licensing authority outside this public source repository",
     "production_signing_status": "signed",
@@ -63,12 +99,22 @@
     "version_layout": "releases/<version>",
     "current_pointer": "current.json",
     "trust_anchor_directory": ".trust-anchors",
-    "trust_anchor_contains": ["pinned release public key", "pinned entitlement public key", "fingerprint receipt"],
+    "trust_anchor_contains": [
+      "pinned release public key",
+      "pinned entitlement public key",
+      "fingerprint receipt"
+    ],
     "first_secure_install_pins_trust_anchors": true,
     "implicit_trust_anchor_rotation": false,
     "trust_anchor_rotation": "explicit migration only",
     "installed_trust_directory": ".release-trust",
-    "installed_trust_contains": ["release detached signature", "release public key", "entitlement detached signature", "entitlement public key", "verification receipt"],
+    "installed_trust_contains": [
+      "release detached signature",
+      "release public key",
+      "entitlement detached signature",
+      "entitlement public key",
+      "verification receipt"
+    ],
     "existing_managed_root_requires_current_pointer_and_real_trust_anchors": true,
     "marker_only_or_incomplete_managed_root_adoption": false,
     "incomplete_managed_root_requires_explicit_recovery": true,
@@ -88,15 +134,81 @@
     "release_version_path_traversal": false,
     "artifact_symlink_escape": false,
     "rollback_requires_existing_verified_version": true,
-    "filesystem_root_delete": false
+    "filesystem_root_delete": false,
+    "lifecycle_mutations_serialized": true,
+    "lifecycle_lock_scope": "existing managed-root parent directory",
+    "concurrent_secure_mutation": "fail_closed_before_package_state_change",
+    "secure_mutation_requires_existing_parent_directory": true,
+    "secure_uninstall_verifies_all_installed_releases": true,
+    "secure_uninstall_requires_exact_managed_inventory": true,
+    "unexpected_managed_root_content_blocks_uninstall": true,
+    "unexpected_trust_anchor_content_blocks_uninstall": true
   },
   "public_private_boundary": {
-    "public": ["schemas", "official verification CLI", "source-only synthetic fixtures", "hash/provenance/SBOM requirements", "signature verification algorithm", "trust-anchor continuity mechanics", "managed-root ownership rules", "recovery semantics"],
-    "customer_only": ["real entitlement", "release artifacts", "release manifest", "detached release signature", "detached entitlement signature", "trusted release public key", "trusted entitlement public key", "customer installation configuration"],
-    "private": ["payment secrets", "release signing private keys", "entitlement signing private keys", "provider credentials", "private implementation tooling", "customer data"]
+    "public": [
+      "schemas",
+      "official verification CLI",
+      "source-only synthetic fixtures",
+      "hash/provenance/SBOM requirements",
+      "signature verification algorithm",
+      "trust-anchor continuity mechanics",
+      "managed-root ownership rules",
+      "recovery semantics"
+    ],
+    "customer_only": [
+      "real entitlement",
+      "release artifacts",
+      "release manifest",
+      "detached release signature",
+      "detached entitlement signature",
+      "trusted release public key",
+      "trusted entitlement public key",
+      "customer installation configuration"
+    ],
+    "private": [
+      "payment secrets",
+      "release signing private keys",
+      "entitlement signing private keys",
+      "provider credentials",
+      "private implementation tooling",
+      "customer data"
+    ]
   },
   "truth_boundary": {
-    "source_selftest_can_prove": ["compatibility classification", "artifact hash checking", "distinct required payload/SBOM/provenance inventory", "entitlement-to-release binding", "forged entitlement rejection", "Ed25519 release detached-signature verification", "Ed25519 entitlement detached-signature verification", "public-key fingerprint binding", "trust-anchor substitution rejection", "trust-anchor tamper detection when anchors and receipts do not match", "marker-only managed-root adoption rejection", "transactional recovery after trust persistence failure", "tampered installed entitlement rejection", "secure uninstall rejection after trust failure", "managed install mechanics", "doctor integrity", "rollback mechanics", "guarded uninstall"],
-    "source_selftest_cannot_prove": ["semantic correctness of a real SBOM or provenance statement", "authority of future production signing keys", "secure key rotation ceremony", "tamper resistance against an attacker able to rewrite every file in the managed root", "payment", "real entitlement issuance or revocation", "customer environment compatibility", "installed runtime health", "verified_live", "customer acceptance", "commercial readiness"]
+    "source_selftest_can_prove": [
+      "compatibility classification",
+      "artifact hash checking",
+      "distinct required payload/SBOM/provenance inventory",
+      "entitlement-to-release binding",
+      "forged entitlement rejection",
+      "Ed25519 release detached-signature verification",
+      "Ed25519 entitlement detached-signature verification",
+      "public-key fingerprint binding",
+      "trust-anchor substitution rejection",
+      "trust-anchor tamper detection when anchors and receipts do not match",
+      "marker-only managed-root adoption rejection",
+      "transactional recovery after trust persistence failure",
+      "tampered installed entitlement rejection",
+      "secure uninstall rejection after trust failure",
+      "managed install mechanics",
+      "doctor integrity",
+      "rollback mechanics",
+      "guarded uninstall",
+      "overlapping secure install/rollback/uninstall rejection without package-state mutation",
+      "secure uninstall rejection when unexpected managed-root or trust-anchor content would otherwise be recursively deleted"
+    ],
+    "source_selftest_cannot_prove": [
+      "semantic correctness of a real SBOM or provenance statement",
+      "authority of future production signing keys",
+      "secure key rotation ceremony",
+      "tamper resistance against an attacker able to rewrite every file in the managed root",
+      "payment",
+      "real entitlement issuance or revocation",
+      "customer environment compatibility",
+      "installed runtime health",
+      "verified_live",
+      "customer acceptance",
+      "commercial readiness"
+    ]
   }
 }

@@ -15,9 +15,11 @@ The official package path covers:
 - bounded versioned install into a new target, an empty unmanaged target, or an already complete managed root;
 - rejection of marker-only or otherwise incomplete pre-existing managed roots: the ownership marker by itself is not enough to adopt a directory, and an existing managed root must have a valid current pointer and real trust anchors;
 - transactional secure install recovery: if trust persistence or post-install verification fails, the previous `current.json` is restored, failed release material is removed, and a failed first bootstrap restores the target to its pre-install state;
+- fail-closed lifecycle serialization: install, rollback and uninstall take a non-blocking exclusive lock on the existing parent directory of the managed root, so overlapping secure mutations are rejected before package state can be changed;
+- secure lifecycle mutation requires the managed-root parent directory to already exist; the secure entrypoint does not create missing parent-directory chains;
 - deterministic package doctor that re-verifies installed release and entitlement signatures against the pinned managed-root trust anchors and rechecks the installed inventory;
 - rollback only to an already installed version whose artifacts, release signature and active signed entitlement still verify, with pointer restoration if post-switch verification fails;
-- secure uninstall only after the current package passes the full signed `doctor` path; a marker alone cannot authorize recursive deletion, and a tampered package is not silently removed.
+- secure uninstall only after the current package passes the full signed `doctor` path and every installed release plus the managed-root/trust-anchor inventories verify exactly; unexpected files/directories block recursive deletion, so unrelated content is never silently removed.
 
 The customer-facing entrypoint is:
 
@@ -38,7 +40,7 @@ python3 scripts/customer-package.py selftest
 python3 scripts/customer-package-secure.py selftest
 ```
 
-The source tests reject duplicate artifact paths, missing required payload/SBOM/provenance kinds and unknown artifact kinds. The secure selftest creates separate ephemeral Ed25519 release and entitlement authorities, signs multiple synthetic versions, verifies both trust chains, rejects marker-only root adoption, installs and updates versions, rejects a different signing authority after trust anchors are pinned, injects a trust-persistence failure and verifies transactional recovery, rolls back to the first version, verifies package acceptance, rejects a structurally valid but forged entitlement, rejects unsigned/synthetic release evidence on the official path, detects entitlement and trust-anchor tampering, refuses secure uninstall while trust verification is broken, and removes the managed root only after full verification is restored.
+The source tests reject duplicate artifact paths, missing required payload/SBOM/provenance kinds and unknown artifact kinds. The secure selftest creates separate ephemeral Ed25519 release and entitlement authorities, signs multiple synthetic versions, verifies both trust chains, rejects marker-only root adoption, installs and updates versions, rejects a different signing authority after trust anchors are pinned, injects a trust-persistence failure and verifies transactional recovery, rejects overlapping install/rollback/uninstall without package-state mutation, rolls back to the first version, verifies package acceptance, rejects a structurally valid but forged entitlement, rejects unsigned/synthetic release evidence on the official path, detects entitlement and trust-anchor tampering, refuses secure uninstall while trust verification is broken, and removes the managed root only after full verification is restored.
 
 ## Truth boundary
 
