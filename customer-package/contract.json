@@ -13,10 +13,11 @@
     "uninstall": "python3 scripts/customer-package-secure.py uninstall --root <managed-root>"
   },
   "source_test_harness": {
-    "entrypoint": "python3 scripts/customer-package.py selftest",
+    "foundation_entrypoint": "python3 scripts/customer-package.py selftest",
+    "secure_regression_entrypoint": "python3 -m unittest discover -s tests -p 'test_customer_package_secure.py'",
     "production_install_interface": false,
-    "synthetic_signature_mode": "internal_selftest_only",
-    "rule": "The low-level harness is not a customer lifecycle interface. Customer verify/install/doctor/acceptance/rollback/uninstall operations belong to the secure entrypoint; synthetic fixtures remain internal to deterministic source tests."
+    "synthetic_signature_mode": "external_test_module_only",
+    "rule": "Customer verify/install/doctor/acceptance/rollback/uninstall operations belong to the secure runtime entrypoint. Synthetic private keys, signatures and fixtures live only in the external regression test module and are not exposed by the production CLI."
   },
   "compatibility": {
     "schema": "2026-08-30.local-ai-os-compatibility.v1",
