@@ -1,0 +1,108 @@
+name: Customer Package Runtime Test Separation
+
+on:
+  push:
+    branches:
+      - feat/customer-package-current-20260906
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repair branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: feat/customer-package-current-20260906
+
+      - name: Verify repair trigger
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          test "$(git diff --name-only HEAD^ HEAD)" = ".github/workflows/customer-package-strip-runtime-selftest.yml"
+
+      - name: Separate runtime from synthetic test harness
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("scripts/customer-package-secure.py")
+          text = path.read_text(encoding="utf-8")
+          start_marker = "\ndef _write_payload(path: Path, payload: bytes) -> None:\n"
+          end_marker = "\ndef print_json(value: Mapping[str, Any]) -> None:\n"
+          if text.count(start_marker) != 1 or text.count(end_marker) != 1:
+            raise SystemExit("secure runtime/test boundary drifted")
+          start = text.index(start_marker)
+          end = text.index(end_marker, start)
+          text = text[:start] + "\n" + text[end:]
+
+          parser_line = '  sub.add_parser("selftest")\n'
+          if text.count(parser_line) != 1:
+            raise SystemExit("secure selftest parser surface drifted")
+          text = text.replace(parser_line, "", 1)
+
+          dispatch = '''  elif args.command == "uninstall":
+            print_json(uninstall(args.root))
+          else:
+            print_json(selftest())
+          return 0
+          '''
+          replacement = '''  elif args.command == "uninstall":
+            print_json(uninstall(args.root))
+          return 0
+          '''
+          dispatch = "\n".join(line[10:] if line.startswith("          ") else line for line in dispatch.splitlines()) + "\n"
+          replacement = "\n".join(line[10:] if line.startswith("          ") else line for line in replacement.splitlines()) + "\n"
+          if text.count(dispatch) != 1:
+            raise SystemExit("secure selftest dispatch surface drifted")
+          text = text.replace(dispatch, replacement, 1)
+          path.write_text(text, encoding="utf-8")
+
+          contract_path = Path("customer-package/contract.json")
+          contract = json.loads(contract_path.read_text(encoding="utf-8"))
+          contract["source_test_harness"] = {
+            "foundation_entrypoint": "python3 scripts/customer-package.py selftest",
+            "secure_regression_entrypoint": "python3 -m unittest discover -s tests -p 'test_customer_package_secure.py'",
+            "production_install_interface": False,
+            "synthetic_signature_mode": "external_test_module_only",
+            "rule": "Customer verify/install/doctor/acceptance/rollback/uninstall operations belong to the secure runtime entrypoint. Synthetic private keys, signatures and fixtures live only in the external regression test module and are not exposed by the production CLI."
+          }
+          contract_path.write_text(
+            json.dumps(contract, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+          )
+          PY
+
+      - name: Verify runtime and external regression boundary
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python3 -m py_compile scripts/customer-package-secure.py tests/test_customer_package_secure.py
+          ! grep -q 'def selftest' scripts/customer-package-secure.py
+          ! grep -q 'signed_fixture' scripts/customer-package-secure.py
+          ! grep -q '_generate_keypair' scripts/customer-package-secure.py
+          ! python3 scripts/customer-package-secure.py --help | grep -q selftest
+          python3 -m unittest discover -s tests -p 'test_customer_package_secure.py'
+          python3 scripts/customer-package.py selftest
+          python3 scripts/customer-package-secure.py compatibility --facts tests/fixtures/customer-package/supported-linux.json
+          python3 scripts/customer-package-secure.py compatibility --facts tests/fixtures/customer-package/unsupported-platform.json
+          python3 -m json.tool customer-package/contract.json >/dev/null
+          git diff --check
+
+      - name: Commit verified separation and remove temporary workflow
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          rm .github/workflows/customer-package-strip-runtime-selftest.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add scripts/customer-package-secure.py customer-package/contract.json .github/workflows/customer-package-strip-runtime-selftest.yml
+          git diff --cached --check
+          git commit -m "refactor(package): separate secure runtime from synthetic tests"
+          git push origin HEAD:feat/customer-package-current-20260906
