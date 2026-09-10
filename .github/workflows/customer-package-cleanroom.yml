@@ -1,0 +1,40 @@
+name: Customer Package Cleanroom
+
+on:
+  push:
+    branches:
+      - test/customer-package-cleanroom-20260911
+    paths:
+      - scripts/customer-package.py
+      - scripts/customer-package-secure.py
+      - scripts/test-customer-package-cleanroom.sh
+      - tests/customer_package_cleanroom.py
+      - customer-package/CLEANROOM.md
+      - .github/workflows/customer-package-cleanroom.yml
+  pull_request:
+    branches:
+      - feat/customer-package-current-20260906
+    paths:
+      - scripts/customer-package.py
+      - scripts/customer-package-secure.py
+      - scripts/test-customer-package-cleanroom.sh
+      - tests/customer_package_cleanroom.py
+      - customer-package/CLEANROOM.md
+      - .github/workflows/customer-package-cleanroom.yml
+
+permissions:
+  contents: read
+
+jobs:
+  cleanroom:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - name: Run network-isolated customer lifecycle
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          bash scripts/test-customer-package-cleanroom.sh
