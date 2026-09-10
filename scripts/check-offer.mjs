@@ -6,12 +6,13 @@ const cohort = readFileSync(new URL('../docs/proof-cohort.md', import.meta.url),
 const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8')
 
 const required = [
-  [site, 'proof cohort'], [site, 'bounded context'], [site, 'scoped execution'], [site, 'verification'], [site, 'run report'],
-  [site, 'https://t.me/a1gorithms'], [offer, '49,900 ₽'], [offer, '9,900 ₽'], [offer, 'five working days'],
-  [cohort, 'acceptance checks'], [cohort, 'No full-autonomy promise'],
+  [site, 'bounded context'], [site, 'scoped execution'], [site, 'verification'], [site, 'run report'],
+  [site, 'https://t.me/a1gorithms'], [site, 'diagnostic-2026-07'], [site, '9 900 ₽'], [site, '49 900 ₽'],
+  [site, 'founder-led'], [site, 'не self-service'], [offer, '49,900 ₽'], [offer, '9,900 ₽'], [offer, 'five working days'],
+  [offer, 'diagnostic-2026-07'], [cohort, 'acceptance checks'], [cohort, 'No full-autonomy promise'],
 ]
 for (const [source, value] of required) if (!source.includes(value)) throw new Error(`Missing offer invariant: ${value}`)
 
 const forbidden = ['my-cv', 'портфолио', 'Frontend Developer', 'резюме']
 for (const value of forbidden) if (`${site}\n${html}`.toLowerCase().includes(value.toLowerCase())) throw new Error(`Portfolio coupling detected: ${value}`)
-console.log(`Offer contract OK: ${required.length} proof-first invariants, no portfolio coupling`)
+console.log(`Offer contract OK: ${required.length} proof-first/R1 invariants, no portfolio coupling`)

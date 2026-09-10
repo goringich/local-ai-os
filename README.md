@@ -6,7 +6,7 @@ Live site: [goringich.github.io/local-ai-os](https://goringich.github.io/local-a
 
 ## Start here
 
-- `/` is the proof-first acquisition page: one failure mode, one controlled workflow, an honest founder proof, and the proof-cohort CTA.
+- `/` is the proof-first acquisition page: one failure mode, one controlled workflow, an honest founder proof, and the founder-led paid diagnostic CTA.
 - `/proofs` and `/proofs/<proof-id>` are shareable, public-safe evidence artifacts.
 - `/product`, `/architecture`, `/runtime`, `/context-memory`, `/codex-orchestrator`, `/project-atlas`, `/integrations`, `/security`, `/deployment`, `/acceptance`, `/operations`, `/recovery`, `/releases`, `/roadmap`, `/docs`, and `/faq` are the technical due-diligence portal.
 
