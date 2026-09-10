@@ -1,0 +1,61 @@
+name: secure-package-current-trust-repair
+
+on:
+  push:
+    branches:
+      - feat/customer-package-current-20260906
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: github.actor == 'goringich'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repair branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: feat/customer-package-current-20260906
+          fetch-depth: 0
+
+      - name: Apply current trust preflight regression fix
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('scripts/customer-package-secure.py')
+          text = path.read_text(encoding='utf-8')
+
+          old = '''  if previous_current is not None:\n    ensure_trust_anchors(\n      root,\n      release_public_key,\n      entitlement_public_key,\n      allow_create=False,\n    )\n'''
+          new = '''  if previous_current is not None:\n    doctor(root)\n    ensure_trust_anchors(\n      root,\n      release_public_key,\n      entitlement_public_key,\n      allow_create=False,\n    )\n'''
+          if text.count(old) != 1:
+            raise SystemExit('current trust preflight anchor mismatch')
+          text = text.replace(old, new, 1)
+
+          old = '''    shutil.rmtree(preexisting_staging)\n    doctor(root)\n\n    alternate_release_private, alternate_release_public = _generate_keypair(work, "alternate-release")\n'''
+          new = '''    shutil.rmtree(preexisting_staging)\n    doctor(root)\n\n    current_entitlement = root / "releases" / "0.0.2-secure-test" / "entitlement.json"\n    current_entitlement_original = base.read_json(current_entitlement)\n    current_entitlement_tampered = dict(current_entitlement_original)\n    current_entitlement_tampered["entitlement_id"] = "tampered-before-update"\n    base.write_json(current_entitlement, current_entitlement_tampered)\n    tampered_current_update_rejected = base.expect_blocked(lambda: install(\n      root,\n      third[0],\n      third[1],\n      third[2],\n      release_public_key,\n      third[3],\n      entitlement_public_key,\n    ))\n    if base.current_state(root).get("version") != "0.0.2-secure-test":\n      raise base.PackageError("rejected update from tampered current state changed current release")\n    if (root / "releases" / "0.0.3-secure-test").exists():\n      raise base.PackageError("rejected update from tampered current state installed a new release")\n    base.write_json(current_entitlement, current_entitlement_original)\n    doctor(root)\n\n    alternate_release_private, alternate_release_public = _generate_keypair(work, "alternate-release")\n'''
+          if text.count(old) != 1:
+            raise SystemExit('current trust selftest insertion anchor mismatch')
+          text = text.replace(old, new, 1)
+
+          old = '''      "preexisting_staging_rejected": preexisting_staging_rejected,\n      "transactional_install_failure_recovered": transactional_install_failure_recovered,\n'''
+          new = '''      "preexisting_staging_rejected": preexisting_staging_rejected,\n      "tampered_current_update_rejected": tampered_current_update_rejected,\n      "transactional_install_failure_recovered": transactional_install_failure_recovered,\n'''
+          if text.count(old) != 1:
+            raise SystemExit('current trust selftest result anchor mismatch')
+          text = text.replace(old, new, 1)
+          path.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Verify focused secure package regression
+        run: python3 scripts/customer-package-secure.py selftest
+
+      - name: Commit repair and remove temporary workflow
+        run: |
+          rm .github/workflows/secure-package-current-trust-repair.yml
+          git config user.name "goringich"
+          git config user.email "66201122+goringich@users.noreply.github.com"
+          git add scripts/customer-package-secure.py .github/workflows/secure-package-current-trust-repair.yml
+          git diff --cached --check
+          git commit -m "fix(product): verify current trust before secure update"
+          git push origin HEAD:feat/customer-package-current-20260906
