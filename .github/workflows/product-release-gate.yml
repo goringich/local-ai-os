@@ -33,6 +33,9 @@ jobs:
       - name: Run product QA
         run: npm run qa
 
+      - name: Run customer package foundation tests
+        run: python3 -m unittest tests/test_customer_package.py
+
       - name: Verify release docs exist
         run: |
           test -f docs/technical-architecture.md
