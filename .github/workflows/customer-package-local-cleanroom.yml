@@ -1,0 +1,49 @@
+name: Customer Package Local Cleanroom
+
+on:
+  push:
+    branches:
+      - test/customer-package-cleanroom-20260911
+    paths:
+      - scripts/customer-package.py
+      - scripts/customer-package-secure.py
+      - scripts/test-customer-package-cleanroom.sh
+      - tests/customer_package_cleanroom.py
+      - .github/workflows/customer-package-local-cleanroom.yml
+
+permissions:
+  contents: read
+
+jobs:
+  local-cleanroom:
+    if: github.repository == 'goringich/local-ai-os' && github.actor == 'goringich'
+    runs-on: [self-hosted, Linux, X64, goringich-ci, trusted-dispatch]
+    timeout-minutes: 10
+    steps:
+      - name: Verify trusted runner boundary
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          [[ "$(id -u)" -ne 0 ]]
+          [[ ! -r /home/goringich/.ssh ]]
+          [[ ! -r /home/goringich/.config/gh/hosts.yml ]]
+          command -v docker >/dev/null
+          docker version >/dev/null
+
+      - name: Checkout exact source without persisted credentials
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          clean: true
+
+      - name: Bind test to exact pushed head
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          test "$(git rev-parse HEAD)" = "${GITHUB_SHA}"
+
+      - name: Run isolated lifecycle on local host
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          bash scripts/test-customer-package-cleanroom.sh
