@@ -33,90 +33,99 @@ jobs:
           import json
           from pathlib import Path
 
+          def block(*lines: str) -> str:
+            return "\n".join(lines) + "\n"
+
           path = Path("scripts/customer-package-secure.py")
           text = path.read_text(encoding="utf-8")
 
-          old_imports = '''import argparse
-          import importlib.util
-          import json
-          import os
-          from pathlib import Path
-          import shutil
-          import tempfile
-          from typing import Any, Mapping
-          '''
-          new_imports = '''import argparse
-          from contextlib import contextmanager
-          from functools import wraps
-          import importlib.util
-          import json
-          import os
-          from pathlib import Path
-          import shutil
-          import tempfile
-          from typing import Any, Mapping
-          '''
+          old_imports = block(
+            "import argparse",
+            "import importlib.util",
+            "import json",
+            "import os",
+            "from pathlib import Path",
+            "import shutil",
+            "import tempfile",
+            "from typing import Any, Mapping",
+          )
+          new_imports = block(
+            "import argparse",
+            "from contextlib import contextmanager",
+            "from functools import wraps",
+            "import importlib.util",
+            "import json",
+            "import os",
+            "from pathlib import Path",
+            "import shutil",
+            "import tempfile",
+            "from typing import Any, Mapping",
+          )
           if old_imports not in text:
             raise SystemExit("secure import block drifted")
           text = text.replace(old_imports, new_imports, 1)
 
-          anchor = '''ANCHOR_SCHEMA = "2026-08-30.local-ai-os-trust-anchors.v1"
-
-
-          def _real_file'''
-          lock_code = '''ANCHOR_SCHEMA = "2026-08-30.local-ai-os-trust-anchors.v1"
-
-
-          @contextmanager
-          def _lifecycle_lock(root: Path):
-            try:
-              import fcntl
-            except ImportError as exc:
-              raise base.PackageError("secure lifecycle mutation requires POSIX flock support") from exc
-
-            try:
-              parent = root.parent.resolve(strict=True)
-            except (OSError, RuntimeError) as exc:
-              raise base.PackageError(
-                "managed root parent must already exist for secure lifecycle locking"
-              ) from exc
-            if not parent.is_dir():
-              raise base.PackageError("managed root parent must be a real directory")
-
-            flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0)
-            try:
-              fd = os.open(parent, flags)
-            except OSError as exc:
-              raise base.PackageError("cannot open managed root parent for lifecycle locking") from exc
-
-            locked = False
-            try:
-              try:
-                fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-              except BlockingIOError as exc:
-                raise base.PackageError(
-                  "another customer package lifecycle operation is already in progress"
-                ) from exc
-              except OSError as exc:
-                raise base.PackageError("cannot acquire customer package lifecycle lock") from exc
-              locked = True
-              yield
-            finally:
-              if locked:
-                fcntl.flock(fd, fcntl.LOCK_UN)
-              os.close(fd)
-
-
-          def _serialize_lifecycle_mutation(function):
-            @wraps(function)
-            def guarded(root: Path, *args, **kwargs):
-              with _lifecycle_lock(root):
-                return function(root, *args, **kwargs)
-
-            return guarded
-
-
-          def _real_file'''
+          anchor = block(
+            'ANCHOR_SCHEMA = "2026-08-30.local-ai-os-trust-anchors.v1"',
+            "",
+            "",
+            "def _real_file(path: Path, label: str) -> Path:",
+          )
+          lock_code = block(
+            'ANCHOR_SCHEMA = "2026-08-30.local-ai-os-trust-anchors.v1"',
+            "",
+            "",
+            "@contextmanager",
+            "def _lifecycle_lock(root: Path):",
+            "  try:",
+            "    import fcntl",
+            "  except ImportError as exc:",
+            '    raise base.PackageError("secure lifecycle mutation requires POSIX flock support") from exc',
+            "",
+            "  try:",
+            "    parent = root.parent.resolve(strict=True)",
+            "  except (OSError, RuntimeError) as exc:",
+            "    raise base.PackageError(",
+            '      "managed root parent must already exist for secure lifecycle locking"',
+            "    ) from exc",
+            "  if not parent.is_dir():",
+            '    raise base.PackageError("managed root parent must be a real directory")',
+            "",
+            '  flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0)',
+            "  try:",
+            "    fd = os.open(parent, flags)",
+            "  except OSError as exc:",
+            '    raise base.PackageError("cannot open managed root parent for lifecycle locking") from exc',
+            "",
+            "  locked = False",
+            "  try:",
+            "    try:",
+            "      fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)",
+            "    except BlockingIOError as exc:",
+            "      raise base.PackageError(",
+            '        "another customer package lifecycle operation is already in progress"',
+            "      ) from exc",
+            "    except OSError as exc:",
+            '      raise base.PackageError("cannot acquire customer package lifecycle lock") from exc',
+            "    locked = True",
+            "    yield",
+            "  finally:",
+            "    if locked:",
+            "      fcntl.flock(fd, fcntl.LOCK_UN)",
+            "    os.close(fd)",
+            "",
+            "",
+            "def _serialize_lifecycle_mutation(function):",
+            "  @wraps(function)",
+            "  def guarded(root: Path, *args, **kwargs):",
+            "    with _lifecycle_lock(root):",
+            "      return function(root, *args, **kwargs)",
+            "",
+            "  return guarded",
+            "",
+            "",
+            "def _real_file(path: Path, label: str) -> Path:",
+          )
           if anchor not in text:
             raise SystemExit("secure constant/function anchor drifted")
           text = text.replace(anchor, lock_code, 1)
@@ -126,137 +135,156 @@ jobs:
             "def rollback(root: Path, version: str) -> dict[str, Any]:\n",
             "def uninstall(root: Path) -> dict[str, Any]:\n",
           ):
-            if signature not in text:
+            if text.count(signature) != 1:
               raise SystemExit(f"secure mutation signature drifted: {signature.strip()}")
             text = text.replace(signature, "@_serialize_lifecycle_mutation\n" + signature, 1)
 
           existing_anchor = '    existing_release = root / "releases" / "0.0.2-secure-test"\n'
-          concurrency_test = '''    with _lifecycle_lock(root):
-              concurrent_install_rejected = base.expect_blocked(lambda: install(
-                root,
-                third[0],
-                third[1],
-                third[2],
-                release_public_key,
-                third[3],
-                entitlement_public_key,
-              ))
-              concurrent_rollback_rejected = base.expect_blocked(
-                lambda: rollback(root, "0.0.1-secure-test")
-              )
-              concurrent_uninstall_rejected = base.expect_blocked(lambda: uninstall(root))
-            if base.current_state(root).get("version") != "0.0.2-secure-test":
-              raise base.PackageError("rejected concurrent lifecycle mutation changed current release")
-            if (root / "releases" / "0.0.3-secure-test").exists():
-              raise base.PackageError("rejected concurrent install created release payload")
-            doctor(root)
-
-          '''
+          concurrency_test = block(
+            "    with _lifecycle_lock(root):",
+            "      concurrent_install_rejected = base.expect_blocked(lambda: install(",
+            "        root,",
+            "        third[0],",
+            "        third[1],",
+            "        third[2],",
+            "        release_public_key,",
+            "        third[3],",
+            "        entitlement_public_key,",
+            "      ))",
+            "      concurrent_rollback_rejected = base.expect_blocked(",
+            '        lambda: rollback(root, "0.0.1-secure-test")',
+            "      )",
+            "      concurrent_uninstall_rejected = base.expect_blocked(lambda: uninstall(root))",
+            '    if base.current_state(root).get("version") != "0.0.2-secure-test":',
+            '      raise base.PackageError("rejected concurrent lifecycle mutation changed current release")',
+            '    if (root / "releases" / "0.0.3-secure-test").exists():',
+            '      raise base.PackageError("rejected concurrent install created release payload")',
+            "    doctor(root)",
+            "",
+          )
           if text.count(existing_anchor) != 1:
             raise SystemExit("secure concurrency selftest anchor drifted")
           text = text.replace(existing_anchor, concurrency_test + existing_anchor, 1)
 
-          uninstall_marker = '''@_serialize_lifecycle_mutation
-          def uninstall(root: Path) -> dict[str, Any]:
-          '''
-          uninstall_guard = '''def _verify_uninstall_scope(root: Path) -> None:
-            expected_root = {base.MARKER, base.CURRENT, "releases", ANCHOR_DIR}
-            actual_root = {entry.name for entry in root.iterdir()}
-            unexpected_root = sorted(actual_root - expected_root)
-            missing_root = sorted(expected_root - actual_root)
-            if unexpected_root or missing_root:
-              raise base.PackageError("managed root inventory is not exact enough for secure uninstall")
-
-            releases = base.managed_releases_root(root, create=False)
-            for release_root in releases.iterdir():
-              if release_root.is_symlink() or not release_root.is_dir():
-                raise base.PackageError("managed release inventory contains an unsafe entry")
-              version = base.safe_version(release_root.name)
-              verified = verify_installed_trust(root, version)
-
-              expected_release = {"artifacts", "release-manifest.json", "entitlement.json", TRUST_DIR}
-              actual_release = {entry.name for entry in release_root.iterdir()}
-              if actual_release != expected_release:
-                raise base.PackageError("installed release contains unexpected or missing managed content")
-
-              trust = release_root / TRUST_DIR
-              expected_trust = {
-                TRUST_RECEIPT,
-                "release.sig",
-                "release-public-key.pem",
-                "entitlement.sig",
-                "entitlement-public-key.pem",
-              }
-              actual_trust = {entry.name for entry in trust.iterdir()}
-              if actual_trust != expected_trust:
-                raise base.PackageError("installed trust directory inventory is not exact")
-
-              artifact_root = release_root / "artifacts"
-              expected_files = {
-                str(base.safe_relative(row.get("path")))
-                for row in verified["release"]["artifacts"]
-              }
-              allowed_dirs = set()
-              for relative in expected_files:
-                parent = Path(relative).parent
-                while str(parent) not in {"", "."}:
-                  allowed_dirs.add(str(parent))
-                  parent = parent.parent
-
-              actual_files = set()
-              for candidate in artifact_root.rglob("*"):
-                relative = str(candidate.relative_to(artifact_root))
-                if candidate.is_symlink():
-                  raise base.PackageError("installed artifact inventory contains a symlink")
-                if candidate.is_file():
-                  actual_files.add(relative)
-                elif candidate.is_dir():
-                  if relative not in allowed_dirs:
-                    raise base.PackageError("installed artifact inventory contains an unexpected directory")
-                else:
-                  raise base.PackageError("installed artifact inventory contains an unsafe entry")
-              if actual_files != expected_files:
-                raise base.PackageError("installed artifact inventory is not exact")
-
-
-          @_serialize_lifecycle_mutation
-          def uninstall(root: Path) -> dict[str, Any]:
-          '''
+          uninstall_marker = block(
+            "@_serialize_lifecycle_mutation",
+            "def uninstall(root: Path) -> dict[str, Any]:",
+          )
+          uninstall_guard = block(
+            "def _verify_uninstall_scope(root: Path) -> None:",
+            '  expected_root = {base.MARKER, base.CURRENT, "releases", ANCHOR_DIR}',
+            "  actual_root = {entry.name for entry in root.iterdir()}",
+            "  if actual_root != expected_root:",
+            '    raise base.PackageError("managed root inventory is not exact enough for secure uninstall")',
+            "",
+            "  anchor_root = root / ANCHOR_DIR",
+            '  expected_anchors = {ANCHOR_RECEIPT, "release-public-key.pem", "entitlement-public-key.pem"}',
+            "  actual_anchors = {entry.name for entry in anchor_root.iterdir()}",
+            "  if actual_anchors != expected_anchors:",
+            '    raise base.PackageError("managed trust-anchor inventory is not exact")',
+            "  read_trust_anchors(root)",
+            "",
+            "  releases = base.managed_releases_root(root, create=False)",
+            "  for release_root in releases.iterdir():",
+            "    if release_root.is_symlink() or not release_root.is_dir():",
+            '      raise base.PackageError("managed release inventory contains an unsafe entry")',
+            "    version = base.safe_version(release_root.name)",
+            "    verified = verify_installed_trust(root, version)",
+            "",
+            '    expected_release = {"artifacts", "release-manifest.json", "entitlement.json", TRUST_DIR}',
+            "    actual_release = {entry.name for entry in release_root.iterdir()}",
+            "    if actual_release != expected_release:",
+            '      raise base.PackageError("installed release contains unexpected or missing managed content")',
+            "",
+            "    trust = release_root / TRUST_DIR",
+            "    expected_trust = {",
+            "      TRUST_RECEIPT,",
+            '      "release.sig",',
+            '      "release-public-key.pem",',
+            '      "entitlement.sig",',
+            '      "entitlement-public-key.pem",',
+            "    }",
+            "    actual_trust = {entry.name for entry in trust.iterdir()}",
+            "    if actual_trust != expected_trust:",
+            '      raise base.PackageError("installed trust directory inventory is not exact")',
+            "",
+            '    artifact_root = release_root / "artifacts"',
+            "    expected_files = {",
+            '      str(base.safe_relative(row.get("path")))',
+            '      for row in verified["release"]["artifacts"]',
+            "    }",
+            "    allowed_dirs = set()",
+            "    for relative in expected_files:",
+            "      parent = Path(relative).parent",
+            '      while str(parent) not in {"", "."}:',
+            "        allowed_dirs.add(str(parent))",
+            "        parent = parent.parent",
+            "",
+            "    actual_files = set()",
+            '    for candidate in artifact_root.rglob("*"):',
+            "      relative = str(candidate.relative_to(artifact_root))",
+            "      if candidate.is_symlink():",
+            '        raise base.PackageError("installed artifact inventory contains a symlink")',
+            "      if candidate.is_file():",
+            "        actual_files.add(relative)",
+            "      elif candidate.is_dir():",
+            "        if relative not in allowed_dirs:",
+            '          raise base.PackageError("installed artifact inventory contains an unexpected directory")',
+            "      else:",
+            '        raise base.PackageError("installed artifact inventory contains an unsafe entry")',
+            "    if actual_files != expected_files:",
+            '      raise base.PackageError("installed artifact inventory is not exact")',
+            "",
+            "",
+            "@_serialize_lifecycle_mutation",
+            "def uninstall(root: Path) -> dict[str, Any]:",
+          )
           if uninstall_marker not in text:
             raise SystemExit("secure uninstall anchor drifted")
           text = text.replace(uninstall_marker, uninstall_guard, 1)
 
-          old_uninstall = '''  verified = doctor(root)
-            result = base.uninstall(root)
-          '''
-          new_uninstall = '''  verified = doctor(root)
-            _verify_uninstall_scope(root)
-            result = base.uninstall(root)
-          '''
-          if old_uninstall not in text:
+          uninstall_body = block(
+            "  verified = doctor(root)",
+            "  result = base.uninstall(root)",
+          )
+          uninstall_body_safe = block(
+            "  verified = doctor(root)",
+            "  _verify_uninstall_scope(root)",
+            "  result = base.uninstall(root)",
+          )
+          if text.count(uninstall_body) != 1:
             raise SystemExit("secure uninstall body drifted")
-          text = text.replace(old_uninstall, new_uninstall, 1)
+          text = text.replace(uninstall_body, uninstall_body_safe, 1)
 
           anchor_tamper = '    anchor_release_key = root / ANCHOR_DIR / "release-public-key.pem"\n'
-          unexpected_test = '''    unexpected_file = root / "do-not-delete.txt"
-            unexpected_file.write_text("must survive rejected uninstall\\n", encoding="utf-8")
-            unexpected_content_uninstall_rejected = base.expect_blocked(lambda: uninstall(root))
-            if not unexpected_file.is_file():
-              raise base.PackageError("secure uninstall deleted unexpected managed-root content")
-            unexpected_file.unlink()
-            doctor(root)
-
-          '''
+          unexpected_test = block(
+            '    unexpected_file = root / "do-not-delete.txt"',
+            '    unexpected_file.write_text("must survive rejected uninstall\\n", encoding="utf-8")',
+            "    unexpected_content_uninstall_rejected = base.expect_blocked(lambda: uninstall(root))",
+            "    if not unexpected_file.is_file():",
+            '      raise base.PackageError("secure uninstall deleted unexpected managed-root content")',
+            "    unexpected_file.unlink()",
+            '    unexpected_anchor_file = root / ANCHOR_DIR / "do-not-delete.txt"',
+            '    unexpected_anchor_file.write_text("must survive rejected uninstall\\n", encoding="utf-8")',
+            "    unexpected_anchor_uninstall_rejected = base.expect_blocked(lambda: uninstall(root))",
+            "    if not unexpected_anchor_file.is_file():",
+            '      raise base.PackageError("secure uninstall deleted unexpected trust-anchor content")',
+            "    unexpected_anchor_file.unlink()",
+            "    doctor(root)",
+            "",
+          )
           if text.count(anchor_tamper) != 1:
             raise SystemExit("secure uninstall selftest anchor drifted")
           text = text.replace(anchor_tamper, unexpected_test + anchor_tamper, 1)
 
           result_line = '      "transactional_install_failure_recovered": transactional_install_failure_recovered,\n'
-          result_extra = result_line + '''      "concurrent_install_rejected": concurrent_install_rejected,
-              "concurrent_rollback_rejected": concurrent_rollback_rejected,
-              "concurrent_uninstall_rejected": concurrent_uninstall_rejected,
-              "unexpected_content_uninstall_rejected": unexpected_content_uninstall_rejected,
-          '''
+          result_extra = result_line + block(
+            '      "concurrent_install_rejected": concurrent_install_rejected,',
+            '      "concurrent_rollback_rejected": concurrent_rollback_rejected,',
+            '      "concurrent_uninstall_rejected": concurrent_uninstall_rejected,',
+            '      "unexpected_content_uninstall_rejected": unexpected_content_uninstall_rejected,',
+            '      "unexpected_anchor_uninstall_rejected": unexpected_anchor_uninstall_rejected,',
+          )
           if text.count(result_line) != 1:
             raise SystemExit("secure selftest result anchor drifted")
           text = text.replace(result_line, result_extra, 1)
@@ -270,7 +298,7 @@ jobs:
             raise SystemExit("customer package README recovery anchor drifted")
           readme_text = readme_text.replace(recovery, addition, 1)
           uninstall_old = "- secure uninstall only after the current package passes the full signed `doctor` path; a marker alone cannot authorize recursive deletion, and a tampered package is not silently removed."
-          uninstall_new = "- secure uninstall only after the current package passes the full signed `doctor` path and every installed release plus the managed-root inventory verifies exactly; unexpected files/directories block recursive deletion, so unrelated content is never silently removed."
+          uninstall_new = "- secure uninstall only after the current package passes the full signed `doctor` path and every installed release plus the managed-root/trust-anchor inventories verify exactly; unexpected files/directories block recursive deletion, so unrelated content is never silently removed."
           if uninstall_old not in readme_text:
             raise SystemExit("customer package README uninstall anchor drifted")
           readme_text = readme_text.replace(uninstall_old, uninstall_new, 1)
@@ -289,11 +317,13 @@ jobs:
           managed["concurrent_secure_mutation"] = "fail_closed_before_package_state_change"
           managed["secure_mutation_requires_existing_parent_directory"] = True
           managed["secure_uninstall_verifies_all_installed_releases"] = True
+          managed["secure_uninstall_requires_exact_managed_inventory"] = True
           managed["unexpected_managed_root_content_blocks_uninstall"] = True
+          managed["unexpected_trust_anchor_content_blocks_uninstall"] = True
           proofs = contract["truth_boundary"]["source_selftest_can_prove"]
           for proof in (
             "overlapping secure install/rollback/uninstall rejection without package-state mutation",
-            "secure uninstall rejection when unexpected managed-root content would otherwise be recursively deleted",
+            "secure uninstall rejection when unexpected managed-root or trust-anchor content would otherwise be recursively deleted",
           ):
             if proof not in proofs:
               proofs.append(proof)
