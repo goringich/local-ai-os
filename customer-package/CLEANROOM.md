@@ -26,6 +26,8 @@ During the actual acceptance run the container has:
 - disposable tmpfs work and temp directories;
 - synthetic project data only.
 
+A normal developer workstation may run the wrapper directly through Docker or Podman. The owner's trusted System GitHub runner is deliberately different: it must not receive host-Docker authority. On that runner this same Python acceptance is executed only after the exact candidate source is transported as data into the existing rootless CI broker. The broker boundary, not direct Docker access from the runner, is authoritative for System-triggered local evidence.
+
 ## Covered cycle
 
 The test creates test-only issuer keys outside the customer bundle, builds two production-shaped releases, signs the release manifests and entitlements, archives them, copies and hash-checks them as a download equivalent, then exercises the real customer CLI:
