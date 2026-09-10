@@ -1,0 +1,61 @@
+name: secure-package-recovery-repair
+
+on:
+  push:
+    branches:
+      - feat/customer-package-current-20260906
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: github.actor == 'goringich'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repair branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: feat/customer-package-current-20260906
+          fetch-depth: 0
+
+      - name: Apply recovery ownership regression fix
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('scripts/customer-package-secure.py')
+          text = path.read_text(encoding='utf-8')
+
+          old = '''  root_state = _install_root_state(root)\n  previous_current = root_state["previous_current"]\n  anchors_preexisting = bool(root_state["anchors_preexisting"])\n  if previous_current is not None:\n'''
+          new = '''  root_state = _install_root_state(root)\n  previous_current = root_state["previous_current"]\n  anchors_preexisting = bool(root_state["anchors_preexisting"])\n\n  releases_root = root / "releases"\n  release_root = releases_root / version\n  staging = releases_root / f".{version}.{os.getpid()}.staging"\n  if release_root.exists() or release_root.is_symlink():\n    raise base.PackageError(f"release already installed or unsafe: {version}")\n  if staging.exists() or staging.is_symlink():\n    raise base.PackageError("staging path already exists")\n\n  if previous_current is not None:\n'''
+          if text.count(old) != 1:
+            raise SystemExit('install preflight anchor mismatch')
+          text = text.replace(old, new, 1)
+
+          old = '''    second_result = install(\n      root,\n      second[0],\n      second[1],\n      second[2],\n      release_public_key,\n      second[3],\n      entitlement_public_key,\n    )\n\n    alternate_release_private, alternate_release_public = _generate_keypair(work, "alternate-release")\n'''
+          new = '''    second_result = install(\n      root,\n      second[0],\n      second[1],\n      second[2],\n      release_public_key,\n      second[3],\n      entitlement_public_key,\n    )\n\n    existing_release = root / "releases" / "0.0.2-secure-test"\n    existing_manifest = existing_release / "release-manifest.json"\n    existing_manifest_digest = base.sha256_file(existing_manifest)\n    existing_release_reinstall_rejected = base.expect_blocked(lambda: install(\n      root,\n      second[0],\n      second[1],\n      second[2],\n      release_public_key,\n      second[3],\n      entitlement_public_key,\n    ))\n    if not existing_release.is_dir() or base.sha256_file(existing_manifest) != existing_manifest_digest:\n      raise base.PackageError("rejected reinstall mutated a pre-existing release")\n    doctor(root)\n\n    preexisting_staging = root / "releases" / f".0.0.3-secure-test.{os.getpid()}.staging"\n    preexisting_staging.mkdir()\n    staging_sentinel = preexisting_staging / "keep.txt"\n    staging_sentinel.write_text("pre-existing staging must survive rejection\\n", encoding="utf-8")\n    preexisting_staging_rejected = base.expect_blocked(lambda: install(\n      root,\n      third[0],\n      third[1],\n      third[2],\n      release_public_key,\n      third[3],\n      entitlement_public_key,\n    ))\n    if not staging_sentinel.is_file():\n      raise base.PackageError("rejected install removed a pre-existing staging directory")\n    shutil.rmtree(preexisting_staging)\n    doctor(root)\n\n    alternate_release_private, alternate_release_public = _generate_keypair(work, "alternate-release")\n'''
+          if text.count(old) != 1:
+            raise SystemExit('selftest insertion anchor mismatch')
+          text = text.replace(old, new, 1)
+
+          old = '''      "trust_anchor_substitution_rejected": trust_anchor_substitution_rejected,\n      "trust_anchor_tamper_rejected": trust_anchor_tamper_rejected,\n      "transactional_install_failure_recovered": transactional_install_failure_recovered,\n'''
+          new = '''      "trust_anchor_substitution_rejected": trust_anchor_substitution_rejected,\n      "trust_anchor_tamper_rejected": trust_anchor_tamper_rejected,\n      "existing_release_reinstall_rejected": existing_release_reinstall_rejected,\n      "preexisting_staging_rejected": preexisting_staging_rejected,\n      "transactional_install_failure_recovered": transactional_install_failure_recovered,\n'''
+          if text.count(old) != 1:
+            raise SystemExit('selftest result anchor mismatch')
+          text = text.replace(old, new, 1)
+          path.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Verify focused secure package regression
+        run: python3 scripts/customer-package-secure.py selftest
+
+      - name: Commit repair and remove temporary workflow
+        run: |
+          rm .github/workflows/secure-package-recovery-repair.yml
+          git config user.name "goringich"
+          git config user.email "66201122+goringich@users.noreply.github.com"
+          git add scripts/customer-package-secure.py .github/workflows/secure-package-recovery-repair.yml
+          git diff --cached --check
+          git commit -m "fix(product): preserve pre-existing package state on rejected install"
+          git push origin HEAD:feat/customer-package-current-20260906
