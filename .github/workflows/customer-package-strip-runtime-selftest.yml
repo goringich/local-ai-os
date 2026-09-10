@@ -49,6 +49,15 @@ jobs:
             raise SystemExit("secure selftest CLI surface drifted")
           text = text.replace(parser_line, "", 1)
           text = text.replace(selftest_dispatch, "", 1)
+
+          uninstall_line = "  result = base.uninstall(root)\n"
+          if text.count(uninstall_line) != 1:
+            raise SystemExit("secure uninstall result contract drifted")
+          text = text.replace(
+            uninstall_line,
+            uninstall_line + '  result["status"] = "uninstalled"\n',
+            1,
+          )
           path.write_text(text, encoding="utf-8")
 
           contract_path = Path("customer-package/contract.json")
