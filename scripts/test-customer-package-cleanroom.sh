@@ -57,6 +57,9 @@ RUN_ARGS=(
    mkdir -p "$HOME"
    test ! -e /var/run/docker.sock
    test ! -e /run/podman/podman.sock
+   test ! -e /home/goringich
+   test -z "${GITHUB_TOKEN:-}"
+   test -z "${GH_TOKEN:-}"
    command -v python3 >/dev/null
    command -v openssl >/dev/null
    python3 /src/tests/customer_package_cleanroom.py'
