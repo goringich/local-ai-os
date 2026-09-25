@@ -13,7 +13,7 @@ on:
       - .github/workflows/customer-package-cleanroom.yml
   pull_request:
     branches:
-      - feat/customer-package-current-20260906
+      - main
     paths:
       - scripts/customer-package.py
       - scripts/customer-package-secure.py
