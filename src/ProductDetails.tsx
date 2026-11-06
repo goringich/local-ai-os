@@ -4,7 +4,7 @@ import './product-details.css'
 
 const technicalLayers = [
   ['source', 'Obsidian + GitHub', 'Решения, архитектура, run reports и продуктовые ограничения фиксируются в заметках и репозиториях.'],
-  ['control', '__home_organized', 'Контекстные пакеты, локальные политики, model routing, evals и нормализованные контракты выполнения.'],
+  ['control', 'Локальный слой управления', 'Контекстные пакеты, локальные политики, model routing, evals и нормализованные контракты выполнения.'],
   ['runtime', 'Ollama / Open WebUI / OpenClaw', 'Локальные модели, primary UI, knowledge/RAG, маршрутизация и проектные агенты без второго центра.'],
   ['execution', 'Codex + orchestrator', 'Очередь задач, foreground-исполнение, проверочные команды, shared run reports и понятный next action.'],
   ['cockpit', 'Project Atlas', 'Read-only Mission Control: состояние проектов, очереди, Local Codex Lab, token efficiency и runtime exports.'],
