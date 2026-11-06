@@ -4,11 +4,9 @@
 
 Product documentation is authored in this repository under `docs/`. Obsidian receives a mirrored copy for daily operator use and RAG retrieval.
 
-Canonical local AI architecture remains in:
+Canonical local AI architecture remains in the operator's existing architecture and control-center notes, with their existing tracked mirror. Their locations belong in the private deployment handoff, outside this public repository.
 
-- `/home/goringich/Desktop/Obsidian/ИИ/AI система на этом ПК — полная архитектура 2026-04-24.md`
-- `/home/goringich/Desktop/Obsidian/ИИ/Local AI Control Center.md`
-- `/home/goringich/system-bootstrap/docs/local-ai-stack/notes/ai-system-architecture-2026-04-24.md`
+The sync script does not discover a vault or choose private note paths.
 
 ## Sync command
 
@@ -24,10 +22,16 @@ OBSIDIAN_SYNC_DRY_RUN=1 npm run docs:sync
 
 ## Targets
 
-The sync script writes to:
+Configure these absolute paths in your local shell or private deployment configuration before running either command:
 
-- `/home/goringich/Desktop/Obsidian/ИИ/Local AI Operating System/Product/`
-- `/home/goringich/system-bootstrap/docs/local-ai-stack/product/`
+- `PRODUCT_OBSIDIAN_DIR`: a dedicated product-docs folder in the approved Obsidian vault.
+- `PRODUCT_DOCS_MIRROR_DIR`: a dedicated product-docs folder in the approved tracked mirror.
+
+Both are required. Missing, relative, identical, or overlapping destinations fail before any write. Use dedicated folders because selected filenames are overwritten by the curated copies.
+
+Directory aliases are resolved for separation checks. Existing output symlinks, hardlinks, and non-file entries are rejected. Canonical notes must remain outside the sync destinations and source checkout.
+
+Optional `PRODUCT_ARCHITECTURE_NOTE` and `PRODUCT_ARCHITECTURE_MIRROR` identify existing canonical notes for the established productization section update. If omitted, canonical notes are untouched. Missing files are not created. Architecture decisions still require a separate factual update in the canonical architecture and control-center notes.
 
 It also writes a generated `README.md` index in both targets.
 

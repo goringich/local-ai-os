@@ -11,7 +11,7 @@ LOCAL AI OS is a productized implementation layer for one private Linux workstat
 - `Obsidian` as the human source of truth.
 - `Project Atlas` as read-only operator visibility.
 
-The product site, release manifest, and documentation pipeline package this contour into a sellable and verifiable delivery. They do not create a second always-on runtime.
+The product site, release manifest, and documentation pipeline describe this contour for a scoped implementation. This repository is the public product surface; it does not contain the complete installation. Client delivery and acceptance remain separate gates.
 
 ## Repository surfaces
 
@@ -70,10 +70,10 @@ Allowed check states are currently free text, but the UI has explicit visual sta
 - `docs/obsidian-sync.md`
 - `docs/release-status.md`
 
-Targets:
+Targets are explicitly configured on the operator's machine:
 
-- `/home/goringich/Desktop/Obsidian/ИИ/Local AI Operating System/Product/`
-- `/home/goringich/system-bootstrap/docs/local-ai-stack/product/`
+- `PRODUCT_OBSIDIAN_DIR`: the dedicated product-documentation folder in an approved vault.
+- `PRODUCT_DOCS_MIRROR_DIR`: the dedicated product-documentation folder in an approved tracked mirror.
 
 Canonical architecture notes remain separate. The sync script publishes product documentation; architecture decisions that change the local AI system must still be summarized in the canonical Obsidian architecture note and tracked mirror.
 
@@ -86,7 +86,7 @@ Canonical architecture notes remain separate. The sync script publishes product 
 
 ## Acceptance
 
-A release is product-ready when:
+The public site passes its technical checks when:
 
 - The offer invariants are checked by `scripts/check-offer.mjs`.
 - The release manifest is present and visible in the UI.
@@ -96,3 +96,5 @@ A release is product-ready when:
 - Every direct proof and technical route has a static GitHub Pages artifact.
 - The GitHub Pages workflow builds from `main`.
 - Health-gate caveats are reported separately from product build verification.
+
+These checks do not establish customer acceptance, a working workstation installation, or commercial readiness. Those require the delivery/proof contract and all applicable Product Operating Standard gates.
