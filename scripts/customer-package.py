@@ -10,6 +10,7 @@ import os
 from pathlib import Path
 import re
 import shutil
+import stat
 import subprocess
 import sys
 import tempfile
@@ -51,13 +52,32 @@ def read_json(path: Path) -> dict[str, Any]:
 
 
 def write_json(path: Path, value: Mapping[str, Any]) -> None:
+  content = json.dumps(dict(value), ensure_ascii=False, indent=2, sort_keys=True) + "\n"
   path.parent.mkdir(parents=True, exist_ok=True)
-  temp = path.with_name(f".{path.name}.{os.getpid()}.tmp")
-  temp.write_text(
-    json.dumps(dict(value), ensure_ascii=False, indent=2, sort_keys=True) + "\n",
-    encoding="utf-8",
-  )
-  os.replace(temp, path)
+  try:
+    previous = path.lstat()
+  except FileNotFoundError:
+    previous = None
+  if previous is not None and not stat.S_ISREG(previous.st_mode):
+    raise PackageError("JSON destination must be a regular file")
+  descriptor, name = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=path.parent)
+  temp = Path(name)
+  try:
+    if previous is not None:
+      owned = os.fstat(descriptor)
+      if (owned.st_uid, owned.st_gid) != (previous.st_uid, previous.st_gid):
+        os.fchown(descriptor, previous.st_uid, previous.st_gid)
+      os.fchmod(descriptor, stat.S_IMODE(previous.st_mode))
+    with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+      descriptor = -1
+      handle.write(content)
+      handle.flush()
+      os.fsync(handle.fileno())
+    os.replace(temp, path)
+  finally:
+    if descriptor >= 0:
+      os.close(descriptor)
+    temp.unlink(missing_ok=True)
 
 
 def sha256_file(path: Path) -> str:
@@ -105,7 +125,7 @@ def managed_releases_root(root: Path, *, create: bool) -> Path:
   if not path.exists():
     if not create:
       raise PackageError("managed releases directory is missing")
-    path.mkdir()
+    path.mkdir(mode=0o700)
   if not path.is_dir():
     raise PackageError("managed releases directory must be a real directory")
   return resolved_within(root, path)
@@ -353,6 +373,8 @@ def verify_installed(root: Path, version: str) -> dict[str, Any]:
     target = resolved_within(artifact_root, artifact_root / relative)
     if not target.is_file() or (artifact_root / relative).is_symlink():
       raise PackageError(f"installed artifact missing or unsafe: {relative}")
+    if stat.S_IMODE(target.stat().st_mode) & 0o7077:
+      raise PackageError(f"installed artifact permissions must be owner-only without special bits: {relative}")
     expected_size = raw.get("size")
     if not isinstance(expected_size, int) or isinstance(expected_size, bool) or expected_size < 0:
       raise PackageError(f"invalid installed artifact size: {relative}")
@@ -402,7 +424,7 @@ def install(
         "product_id": PRODUCT_ID,
       })
   else:
-    root.mkdir(parents=True)
+    root.mkdir(parents=True, mode=0o700)
     write_json(root / MARKER, {
       "schema_version": MANAGED_SCHEMA,
       "product_id": PRODUCT_ID,
@@ -412,19 +434,28 @@ def install(
   release_root = releases / version
   if release_root.exists() or release_root.is_symlink():
     raise PackageError(f"release already installed or unsafe: {version}")
-  staging = releases / f".{version}.{os.getpid()}.staging"
-  if staging.exists() or staging.is_symlink():
-    raise PackageError("staging path already exists")
-  target_root = staging / "artifacts"
-  target_root.mkdir(parents=True)
-  for row in verified:
-    relative = Path(row["path"])
-    target = target_root / relative
-    target.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(resolved_within(artifact_root, artifact_root / relative), target)
-  write_json(staging / "release-manifest.json", release)
-  write_json(staging / "entitlement.json", entitlement)
-  staging.rename(release_root)
+  staging = Path(tempfile.mkdtemp(prefix=f".{version}.", suffix=".staging", dir=releases))
+  try:
+    target_root = staging / "artifacts"
+    target_root.mkdir(mode=0o700)
+    for row in verified:
+      relative = Path(row["path"])
+      target = target_root / relative
+      target.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+      source = resolved_within(artifact_root, artifact_root / relative)
+      mode = 0o700 if source.stat().st_mode & stat.S_IXUSR else 0o600
+      shutil.copyfile(source, target)
+      target.chmod(mode)
+    write_json(staging / "release-manifest.json", release)
+    write_json(staging / "entitlement.json", entitlement)
+    staging.rename(release_root)
+  finally:
+    # Only this invocation's unpredictable private staging directory is owned.
+    # A renamed release is recovered by the secure lifecycle transaction.
+    if staging.is_symlink():
+      raise PackageError("cannot safely clean a symlinked staging directory")
+    if staging.exists():
+      shutil.rmtree(resolved_within(root, staging))
 
   previous = ""
   if (root / CURRENT).is_file():

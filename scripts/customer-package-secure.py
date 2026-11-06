@@ -524,11 +524,6 @@ def _cleanup_failed_install(
     if release_root.is_symlink():
       raise base.PackageError("cannot safely recover a symlinked release directory")
     shutil.rmtree(base.resolved_within(root, release_root))
-  staging = root / "releases" / f".{version}.{os.getpid()}.staging"
-  if staging.exists() or staging.is_symlink():
-    if staging.is_symlink():
-      raise base.PackageError("cannot safely recover a symlinked staging directory")
-    shutil.rmtree(base.resolved_within(root, staging))
   anchor_root = root / ANCHOR_DIR
   if not anchors_preexisting and previous_current is None and anchor_root.exists():
     if anchor_root.is_symlink():
@@ -622,7 +617,9 @@ def install(
       entitlement_public_key,
     )
     return doctor(root)
-  except Exception as exc:
+  except BaseException as exc:
+    # Restore caught interruptions (including KeyboardInterrupt), then re-raise.
+    # This is not a promise of SIGKILL or power-loss crash recovery.
     try:
       _cleanup_failed_install(
         root,
@@ -632,7 +629,7 @@ def install(
         root_preexisting=bool(root_state["preexisting"]),
         root_was_empty_unmanaged=bool(root_state["empty_unmanaged"]),
       )
-    except Exception as cleanup_exc:
+    except BaseException as cleanup_exc:
       raise base.PackageError(
         f"secure install failed and recovery was incomplete: {type(cleanup_exc).__name__}"
       ) from exc
@@ -678,7 +675,7 @@ def rollback(root: Path, version: str) -> dict[str, Any]:
   try:
     base.rollback(root, version)
     return doctor(root)
-  except Exception:
+  except BaseException:
     current_path = root / base.CURRENT
     if current_path.is_file() and not current_path.is_symlink():
       current = base.current_state(root)
