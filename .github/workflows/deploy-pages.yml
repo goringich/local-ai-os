@@ -35,6 +35,8 @@ jobs:
         run: npm run docs:sync
         env:
           OBSIDIAN_SYNC_DRY_RUN: "1"
+          PRODUCT_OBSIDIAN_DIR: ${{ runner.temp }}/local-ai-os-docs/obsidian
+          PRODUCT_DOCS_MIRROR_DIR: ${{ runner.temp }}/local-ai-os-docs/mirror
       - name: Configure Pages
         uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
       - name: Upload artifact
