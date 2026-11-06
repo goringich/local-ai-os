@@ -5,8 +5,10 @@ import json
 import os
 from pathlib import Path
 import shutil
+import stat
 import tempfile
 import unittest
+from unittest import mock
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -255,6 +257,151 @@ class SecureCustomerPackageTest(unittest.TestCase):
     self.assertFalse((self.root / "releases" / "0.0.3-external-test").exists())
     secure.base.write_json(current_entitlement, original_entitlement)
     self.assertEqual(secure.doctor(self.root)["status"], "pass")
+
+  def _installed_snapshot(self) -> dict | None:
+    if not self.root.exists():
+      return None
+    result = {".": ("directory", stat.S_IMODE(self.root.stat().st_mode))}
+    for path in self.root.rglob("*"):
+      relative = str(path.relative_to(self.root))
+      mode = stat.S_IMODE(path.lstat().st_mode)
+      if path.is_symlink():
+        result[relative] = ("symlink", mode, os.readlink(path))
+      elif path.is_file():
+        result[relative] = ("file", mode, path.read_bytes())
+      else:
+        result[relative] = ("directory", mode)
+    return result
+
+  def test_json_publication_never_follows_predictable_temp_symlink(self) -> None:
+    self._install(self.first)
+    current = self.root / secure.base.CURRENT
+    current.chmod(0o640)
+    victim = self.work / "outside-customer-data.txt"
+    victim.write_text("synthetic customer data remains unchanged\n", encoding="utf-8")
+    malicious = current.with_name(f".{current.name}.{os.getpid()}.tmp")
+    malicious.symlink_to(victim)
+
+    self._install(self.second)
+
+    self.assertEqual(victim.read_text(), "synthetic customer data remains unchanged\n")
+    self.assertTrue(malicious.is_symlink())
+    self.assertFalse(current.is_symlink())
+    self.assertEqual(stat.S_IMODE(current.stat().st_mode), 0o640)
+    self.assertEqual(secure.doctor(self.root)["version"], "0.0.2-external-test")
+    self.assertEqual(list(self.root.glob(".current.json.*.tmp")), [malicious])
+
+  def test_failed_json_replace_preserves_original_and_cleans_owned_temp(self) -> None:
+    target = self.work / "atomic-state.json"
+    target.write_text('{"original": true}\n', encoding="utf-8")
+    target.chmod(0o640)
+    before = set(self.work.iterdir())
+    with mock.patch.object(secure.base.os, "replace", side_effect=OSError("synthetic publication failure")):
+      with self.assertRaises(OSError):
+        secure.base.write_json(target, {"replacement": True})
+    self.assertEqual(target.read_text(), '{"original": true}\n')
+    self.assertEqual(stat.S_IMODE(target.stat().st_mode), 0o640)
+    self.assertEqual(set(self.work.iterdir()), before)
+
+  def test_interrupted_install_restores_absent_empty_and_installed_targets(self) -> None:
+    original_root = self.root
+    original_persist = secure.persist_trust
+    try:
+      for state in ("absent", "empty", "installed"):
+        for after_persist in (False, True):
+          with self.subTest(state=state, after_persist=after_persist):
+            self.root = self.work / f"interrupted-{state}-{after_persist}"
+            if state == "empty":
+              self.root.mkdir(mode=0o750)
+            elif state == "installed":
+              self._install(self.first)
+              (self.root / "customer-sentinel.txt").write_text("preserve unrelated customer data\n")
+            before = self._installed_snapshot()
+
+            def interrupt(*args, **kwargs):
+              if after_persist:
+                original_persist(*args, **kwargs)
+              raise KeyboardInterrupt("synthetic interrupted trust persistence")
+
+            with mock.patch.object(secure, "persist_trust", side_effect=interrupt):
+              with self.assertRaises(KeyboardInterrupt):
+                self._install(self.second if state == "installed" else self.first)
+            self.assertEqual(self._installed_snapshot(), before)
+            if state == "installed":
+              self.assertEqual(secure.doctor(self.root)["version"], "0.0.1-external-test")
+    finally:
+      self.root = original_root
+
+  def test_interrupted_rollback_restores_pointer_without_deleting_releases(self) -> None:
+    self._install(self.first)
+    self._install(self.second)
+    before = self._installed_snapshot()
+    with mock.patch.object(secure, "doctor", side_effect=KeyboardInterrupt("synthetic rollback interruption")):
+      with self.assertRaises(KeyboardInterrupt):
+        secure.rollback(self.root, "0.0.1-external-test")
+    self.assertEqual(self._installed_snapshot(), before)
+    self.assertEqual(secure.doctor(self.root)["version"], "0.0.2-external-test")
+
+  def test_interrupted_copy_cleans_only_its_unique_staging_directory(self) -> None:
+    self._install(self.first)
+    before = self._installed_snapshot()
+    legacy = self.root / "releases" / f".0.0.2-external-test.{os.getpid()}.staging"
+    owned_staging = []
+
+    def interrupt_copy(source, destination):
+      staging = next(path for path in Path(destination).parents if path.name.endswith(".staging"))
+      owned_staging.append(staging)
+      self.assertNotEqual(staging, legacy)
+      self.assertEqual(stat.S_IMODE(staging.stat().st_mode), 0o700)
+      # A different actor creates a legacy-looking path after preflight. It
+      # must never be mistaken for the private directory owned by this call.
+      legacy.mkdir()
+      (legacy / "keep.txt").write_text("preserve separately created data\n")
+      raise KeyboardInterrupt("synthetic interrupted artifact copy")
+
+    with mock.patch.object(secure.base.shutil, "copyfile", side_effect=interrupt_copy):
+      with self.assertRaises(KeyboardInterrupt):
+        self._install(self.second)
+    self.assertEqual(len(owned_staging), 1)
+    self.assertFalse(owned_staging[0].exists())
+    self.assertEqual((legacy / "keep.txt").read_text(), "preserve separately created data\n")
+    remaining = {path: value for path, value in self._installed_snapshot().items()
+                 if not path.startswith(f"releases/{legacy.name}")}
+    self.assertEqual(remaining, before)
+    self.assertEqual(secure.doctor(self.root)["version"], "0.0.1-external-test")
+
+  def test_artifact_permissions_are_owner_only_and_preserve_owner_execute(self) -> None:
+    self.root.mkdir(mode=0o750)
+    for fixture, source_mode, installed_mode in (
+      (self.first, 0o777, 0o700),
+      (self.second, 0o755, 0o700),
+      (self.third, 0o6666, 0o600),
+    ):
+      with self.subTest(source_mode=oct(source_mode)):
+        release = secure.base.read_json(fixture[1])
+        payload = next(row for row in release["artifacts"] if row["kind"] == "payload")
+        source = fixture[0] / payload["path"]
+        source.chmod(source_mode)
+        self._install(fixture)
+        installed = self.root / "releases" / release["version"] / "artifacts" / payload["path"]
+        self.assertEqual(stat.S_IMODE(installed.stat().st_mode), installed_mode)
+        self.assertEqual(stat.S_IMODE(source.stat().st_mode), source_mode)
+        self.assertEqual(stat.S_IMODE(self.root.stat().st_mode), 0o750)
+        self.assertEqual(stat.S_IMODE(installed.parents[len(Path(payload["path"]).parts)].stat().st_mode), 0o700)
+        self.assertEqual(secure.doctor(self.root)["status"], "pass")
+
+    secure.rollback(self.root, "0.0.1-external-test")
+    self.assertEqual(secure.doctor(self.root)["status"], "pass")
+    first = secure.base.read_json(self.first[1])
+    payload = next(row for row in first["artifacts"] if row["kind"] == "payload")
+    installed = self.root / "releases" / first["version"] / "artifacts" / payload["path"]
+    installed.chmod(0o777)
+    with self.assertRaises(secure.base.PackageError):
+      secure.doctor(self.root)
+    secure.rollback(self.root, "0.0.2-external-test")
+    with self.assertRaises(secure.base.PackageError):
+      secure.rollback(self.root, first["version"])
+    self.assertEqual(secure.doctor(self.root)["version"], "0.0.2-external-test")
 
   def test_doctor_and_trust_anchors_reject_substitution_and_artifact_escape(self) -> None:
     self._install(self.first)

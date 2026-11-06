@@ -65,3 +65,21 @@ It does **not** prove:
 - real customer acceptance or business value.
 
 Those remain separate acceptance layers and must not be inferred from this test.
+
+## Atomic state and permission boundary
+
+The secure unit regressions also exercise interrupted install/rollback recovery,
+exclusive unpredictable JSON/staging creation, and preservation of unrelated
+customer data and existing state-file permissions. New installed artifacts use
+owner-only permissions: `0600`, or `0700` when the source requires owner execute.
+Unsigned group/world access and special mode bits are not copied. Doctor and
+rollback reject installed artifacts with those unsafe bits; legacy packages
+with broader permissions require explicit recovery rather than silent adoption.
+Existing customer-root permissions are not rewritten.
+
+Caught Python failures, including `KeyboardInterrupt`, restore the previous
+pointer/trust state and remove only the failed installation's owned files before
+the interruption is re-raised. This does not establish transaction durability
+under `SIGKILL`, power loss, or an attacker able to rewrite the managed root.
+If cleanup itself fails, the operation reports incomplete recovery and must not
+be treated as an accepted installation.
