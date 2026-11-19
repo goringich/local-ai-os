@@ -235,17 +235,18 @@ export function ExperiencePreview() {
 }
 
 function ValueCalculator() {
-  const [minutes, setMinutes] = useState(90)
-  const [hourlyCost, setHourlyCost] = useState(1500)
-  const monthlyExposure = Math.round(minutes * hourlyCost / 60 * 4.33)
+  const [minutes, setMinutes] = useState('')
+  const [hourlyCost, setHourlyCost] = useState('')
+  const hasInputs = minutes !== '' && hourlyCost !== ''
+  const monthlyExposure = hasInputs ? Math.round(Number(minutes) * Number(hourlyCost) / 60 * 4.33) : null
   return <section className="exp-calculator" aria-labelledby="exp-calculator-title">
     <div><span className="exp-overline">VALUE DISCOVERY / НЕ ПРОГНОЗ ЭКОНОМИИ</span><h2 id="exp-calculator-title">Сколько стоит потеря контекста <em>в вашей работе?</em></h2><p>Введите собственные исходные данные. Мы рассчитываем размер проблемы, а не обещанную экономию от продукта. Реальный выигрыш станет известен только после согласованного baseline и повторного замера.</p></div>
     <div className="exp-calculator-controls">
       <label htmlFor="exp-time">Минут в неделю на повторное восстановление контекста</label>
-      <input id="exp-time" type="number" min="0" max="10000" step="15" value={minutes} onChange={(event) => setMinutes(Math.max(0, Math.min(10000, Number(event.target.value) || 0)))} />
+      <input id="exp-time" type="number" min="0" max="10000" step="15" placeholder="Введите минуты" value={minutes} onChange={(event) => setMinutes(event.target.value === '' ? '' : String(Math.max(0, Math.min(10000, Number(event.target.value) || 0))))} />
       <label htmlFor="exp-rate">Стоимость рабочего часа, ₽</label>
-      <input id="exp-rate" type="number" min="0" max="1000000" step="100" value={hourlyCost} onChange={(event) => setHourlyCost(Math.max(0, Math.min(1000000, Number(event.target.value) || 0)))} />
-      <div className="exp-calculated"><span>ГИПОТЕТИЧЕСКИЕ ЗАТРАТЫ НА ПРОБЛЕМУ / МЕСЯЦ</span><strong>{monthlyExposure.toLocaleString('ru-RU')} ₽</strong><small>Расчёт: мин/нед ÷ 60 × ставка × 4,33 недели. Это не измеренный ROI и не прогноз эффекта.</small></div>
+      <input id="exp-rate" type="number" min="0" max="1000000" step="100" placeholder="Введите ставку" value={hourlyCost} onChange={(event) => setHourlyCost(event.target.value === '' ? '' : String(Math.max(0, Math.min(1000000, Number(event.target.value) || 0))))} />
+      <div className="exp-calculated"><span>ГИПОТЕТИЧЕСКИЕ ЗАТРАТЫ НА ПРОБЛЕМУ / МЕСЯЦ</span><strong>{monthlyExposure === null ? 'Введите значения' : monthlyExposure.toLocaleString('ru-RU') + ' ₽'}</strong><small>Расчёт: мин/нед ÷ 60 × ставка × 4,33 недели. Это не измеренный ROI и не прогноз эффекта.</small></div>
     </div>
   </section>
 }
