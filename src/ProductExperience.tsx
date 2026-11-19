@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import './product-experience.css'
 import { demoVerdict } from './demo-policy.mjs'
+import { AgentInterfaces } from './AgentInterfaces'
 
 type Scenario = {
   id: string
@@ -226,6 +227,7 @@ export function ExperiencePreview() {
       <h2 id="exp-value-title">AI пишет код. <em>Кто помнит цель, проверяет результат и отвечает за продолжение?</em></h2>
       <div className="exp-difference-grid">{DIFFERENCES.map((item, index) => <article key={item.title}><span>0{index + 1}</span><h3>{item.title}</h3><p>{item.detail}</p></article>)}</div>
     </section>
+    <AgentInterfaces />
     <DemoStudio compact />
     <section className="exp-value-bottom">
       <div><span className="exp-overline">СЛЕДУЮЩИЙ УРОВЕНЬ</span><h2>Отправь клиенту не схему из 100 блоков, а <em>результат, который можно проверить.</em></h2></div>
@@ -262,6 +264,7 @@ export function ValuePage() {
         ['04', 'Критерии приёмки', 'Проверки объявленных файлов, целостности, рисков секретов, restore dry-run, согласованного UI/runtime-сценария и письменный acceptance report.'],
       ].map(([number, title, body]) => <article key={number}><span>{number}</span><div><h2>{title}</h2><p>{body}</p></div></article>)}
     </div>
+    <AgentInterfaces />
     <ValueCalculator />
     <section className="exp-faq">
       <h2>Не входит в обещание</h2>
