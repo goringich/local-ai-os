@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import './product-experience.css'
+import { demoVerdict } from './demo-policy.mjs'
 
 type Scenario = {
   id: string
@@ -80,8 +81,7 @@ export function DemoStudio({ compact = false }: { compact?: boolean }) {
   const [violateScope, setViolateScope] = useState(false)
   const [evaluated, setEvaluated] = useState(false)
   const scenario = SCENARIOS.find((item) => item.id === scenarioId) ?? SCENARIOS[0]
-  const blocked = violateScope
-  const verdict = !evaluated ? 'ОЖИДАЕТ ПРОВЕРКИ' : blocked ? 'BLOCKED · POLICY' : 'SIMULATED CHECKS PASS'
+  const { blocked, verdict } = demoVerdict({ scopeViolation: violateScope, evaluated })
 
   function chooseScenario(id: string) {
     setScenarioId(id)
