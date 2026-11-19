@@ -56,4 +56,18 @@ for (const pattern of forbidden) {
 }
 
 execFileSync('node', ['--test', 'scripts/tests/demo-policy.test.mjs'], { cwd: new URL('..', import.meta.url), stdio: 'inherit' })
+const publicProductDocs = [
+  'docs/architecture-reference.md',
+  'docs/buyer-experience-spec.md',
+  'docs/competitive-positioning-2026.md',
+  'docs/product/16-full-architecture.md',
+  'src/product-docs/productDocs.ts',
+]
+for (const file of publicProductDocs) {
+  const content = read(file)
+  for (const forbiddenName of ['goringich/__home_organized', 'goringich/codex-orchestrator', 'goringich/home-admin']) {
+    assert.ok(!content.includes(forbiddenName), 'Private repository name leaked in public product docs: ' + file)
+  }
+}
+
 console.log('Demo contract OK: 3 scenarios, 6 stages, tested fail-closed policy, 3 static routes, no runtime bridge')
