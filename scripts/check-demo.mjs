@@ -1,9 +1,11 @@
 import { readFileSync } from 'node:fs'
 import assert from 'node:assert/strict'
+import { execFileSync } from 'node:child_process'
 
 const root = new URL('../', import.meta.url)
 const read = (path) => readFileSync(new URL(path, root), 'utf8')
 const source = read('src/ProductExperience.tsx')
+const policy = read('src/demo-policy.mjs')
 const site = read('src/ProductSite.tsx')
 const css = read('src/product-experience.css')
 const router = read('scripts/build-static-routes.mjs')
@@ -28,7 +30,7 @@ const required = [
   ['comparison primary sources', 'https://docs.factory.com/missions/overview'],
 ]
 for (const [description, fragment] of required) {
-  assert.ok(source.includes(fragment), 'Demo is missing '+ description)
+  assert.ok((source + '\n' + policy).includes(fragment), 'Demo is missing '+ description)
 }
 
 for (const route of ['/demo', '/value', '/compare']) {
@@ -53,4 +55,5 @@ for (const pattern of forbidden) {
   assert.ok(!pattern.test(source), 'Demo unexpectedly connects to runtime or unsafe browser API: ' + pattern)
 }
 
-console.log('Demo source contract OK: 3 scenarios, 6 stages, fail-closed policy, 3 static routes, no runtime bridge')
+execFileSync('node', ['--test', 'scripts/tests/demo-policy.test.mjs'], { cwd: new URL('..', import.meta.url), stdio: 'inherit' })
+console.log('Demo contract OK: 3 scenarios, 6 stages, tested fail-closed policy, 3 static routes, no runtime bridge')
