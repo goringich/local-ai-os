@@ -7,6 +7,7 @@ Live site: [goringich.github.io/local-ai-os](https://goringich.github.io/local-a
 ## Start here
 
 - `/` is the proof-first acquisition page: one failure mode, one controlled workflow, an honest founder proof, and the founder-led paid diagnostic CTA.
+- `/whitepaper` is a searchable, 33-chapter, public-safe technical and product reference. It loads separately from the main website bundle and distinguishes research, implementation and live proof.
 - `/demo` is an interactive, fully synthetic, client-side workflow simulator (context, permissions, attempt, verification and truthful outcome); **no model, repository or customer data is accessed**.
 - `/value` explains exact founder-led deliverables and lets visitors quantify their own hypothetical context-recovery cost (not claimed savings).
 - `/compare` documents competitor overlap using links to official product sources and explicitly labels differentiation as unproven until paired evaluations.
@@ -60,6 +61,7 @@ The interactive sandbox is deterministic demonstration content, not a connected 
 - [Buyer experience, interactive demo and acceptance boundaries](./docs/buyer-experience-spec.md)
 - [Competitive positioning and evaluation plan](./docs/competitive-positioning-2026.md)
 - [System architecture and source-of-truth inventory](./docs/architecture-reference.md)
+- [Full 33-chapter public technical whitepaper](./docs/public-technical-whitepaper-ru.md)
 
 ## Development and verification
 
