@@ -55,4 +55,4 @@ The calculator computes hypothetical baseline exposure from visitor-provided min
 
 - \`docs/product-manifest.json\`, \`docs/offer.md\`, \`docs/proof-contract.md\`, \`docs/growth-readiness.md\`.
 - \`docs/technical-architecture.md\`, \`docs/product-technical.md\`, \`docs/product/01-architecture.md\`.
-- Private System contracts in \`goringich/__home_organized\` govern underlying architecture; this document is a reviewed public explanation only.
+- Private System contracts in \`private System control repository\` govern underlying architecture; this document is a reviewed public explanation only.
