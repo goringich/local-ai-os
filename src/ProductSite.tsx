@@ -9,7 +9,7 @@ import { ComparePage, DemoStudio, ExperiencePreview, ValuePage } from './Product
 const DIAGNOSTIC_URL = 'https://t.me/a1gorithms?text=LOCAL%20AI%20OS%20%2F%20diagnostic-2026-07%3A%20%D1%85%D0%BE%D1%87%D1%83%20%D1%80%D0%B0%D0%B7%D0%BE%D0%B1%D1%80%D0%B0%D1%82%D1%8C%20%D0%BE%D0%B4%D0%B8%D0%BD%20%D0%BF%D0%BE%D0%B2%D1%82%D0%BE%D1%80%D1%8F%D1%8E%D1%89%D0%B8%D0%B9%D1%81%D1%8F%20workflow'
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, '')
 const portalLinks = [
-  ['product', 'Продукт'], ['architecture', 'Архитектура'], ['runtime', 'Runtime'], ['context-memory', 'Context/RAG'],
+  ['product', 'Продукт'], ['architecture', 'Архитектура'], ['system-architecture', 'Все уровни системы'], ['runtime', 'Runtime'], ['context-memory', 'Context/RAG'],
   ['codex-orchestrator', 'Codex'], ['project-atlas', 'Atlas'], ['security', 'Безопасность'], ['deployment', 'Внедрение'],
   ['integrations', 'Интеграции'], ['acceptance', 'Приёмка'], ['operations', 'Эксплуатация'], ['recovery', 'Recovery'],
   ['releases', 'Релизы'], ['roadmap', 'Roadmap'], ['docs', 'Документация'], ['faq', 'FAQ'],
