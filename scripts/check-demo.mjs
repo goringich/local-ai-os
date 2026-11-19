@@ -9,6 +9,8 @@ const architecture = read('src/SystemArchitectureExplorer.tsx')
 const architectureCss = read('src/architecture-explorer.css')
 const policy = read('src/demo-policy.mjs')
 const site = read('src/ProductSite.tsx')
+const whitepaper = read('docs/public-technical-whitepaper-ru.md')
+const whitepaperUI = read('src/TechnicalWhitepaper.tsx')
 const css = read('src/product-experience.css')
 const router = read('scripts/build-static-routes.mjs')
 const routeCheck = read('scripts/check-routes.mjs')
@@ -35,12 +37,15 @@ for (const [description, fragment] of required) {
   assert.ok((source + '\n' + policy).includes(fragment), 'Demo is missing '+ description)
 }
 
-for (const route of ['/demo', '/value', '/compare']) {
+for (const route of ['/demo', '/whitepaper', '/value', '/compare']) {
   assert.ok(site.includes("route === '" + route + "'"), 'Product router lacks ' + route)
   assert.ok(router.includes("'" + route + "'"), 'Static route generator lacks ' + route)
   assert.ok(routeCheck.includes("'" + route + "'"), 'Route verification lacks ' + route)
 }
 assert.ok(site.includes('<ExperiencePreview />'), 'Homepage does not expose interactive experience')
+assert.equal((whitepaper.match(/^## [0-9]+\. /gm) ?? []).length, 33, 'Full whitepaper must contain 33 chapters')
+assert.ok(whitepaperUI.includes('aria-current={item.id === section'), 'Reader must expose current chapter to assistive technology')
+assert.ok(site.includes('lazy(() => import(\'./TechnicalWhitepaper\'))'), 'Whitepaper must be code-split')
 assert.equal((architecture.match(/id: 'L(?:10|[0-9])'/g) ?? []).length, 11, 'Architecture explorer must cover exactly eleven layers')
 assert.ok(site.includes('<SystemArchitectureExplorer />'), 'System architecture route lacks interactive explorer')
 assert.ok(architecture.includes('aria-pressed={selected.id === layer.id}'), 'Architecture picker lacks keyboard-friendly selection semantics')
@@ -67,6 +72,7 @@ const publicProductDocs = [
   'docs/buyer-experience-spec.md',
   'docs/competitive-positioning-2026.md',
   'docs/product/16-full-architecture.md',
+  'docs/public-technical-whitepaper-ru.md',
 ]
 for (const file of publicProductDocs) {
   const content = read(file)
