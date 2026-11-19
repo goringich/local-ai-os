@@ -5,6 +5,7 @@ import type { Proof } from './proofs/types'
 import ArchitectureBlueprint from './ArchitectureBlueprint'
 import { OwnedPromotionSlot } from './OwnedPromotionSlot'
 import { ComparePage, DemoStudio, ExperiencePreview, ValuePage } from './ProductExperience'
+import { SystemArchitectureExplorer } from './SystemArchitectureExplorer'
 
 const DIAGNOSTIC_URL = 'https://t.me/a1gorithms?text=LOCAL%20AI%20OS%20%2F%20diagnostic-2026-07%3A%20%D1%85%D0%BE%D1%87%D1%83%20%D1%80%D0%B0%D0%B7%D0%BE%D0%B1%D1%80%D0%B0%D1%82%D1%8C%20%D0%BE%D0%B4%D0%B8%D0%BD%20%D0%BF%D0%BE%D0%B2%D1%82%D0%BE%D1%80%D1%8F%D1%8E%D1%89%D0%B8%D0%B9%D1%81%D1%8F%20workflow'
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, '')
@@ -132,7 +133,7 @@ function ProofPage({ id, index }: { id: string; index: ProofIndex }) {
 }
 
 function TechnicalPage({ doc }: { doc: ProductDoc }) {
-  return <main className="page technical-page"><div className="technical-top"><span className="eyebrow">technical portal</span><span className={`badge ${doc.status}`}>{statusLabel(doc.status)}</span></div><h1>{doc.title}</h1><p className="lead">{doc.summary}</p><aside className="portal-nav">{portalLinks.map(([id, label]) => { const page = productDocs.find((item) => item.id === id); return <a className={doc.id === id ? 'is-active' : ''} href={routeHref(page?.route ?? '/product')} key={id}>{label}</a> })}</aside>{doc.id === 'architecture' && <ArchitectureBlueprint />}<div className="doc-blocks">{doc.blocks.map((block) => <section key={block.heading}><h2>{block.heading}</h2><p>{block.body}</p>{block.bullets.length > 0 && <ul>{block.bullets.map((bullet) => <li key={bullet}>{bullet}</li>)}</ul>}</section>)}</div><footer className="page-footer"><a href={routeHref('/proofs')}>Proofs →</a><a href={DIAGNOSTIC_URL} target="_blank" rel="noreferrer" onClick={() => track('cohort_cta_click')}>Подать workflow</a></footer></main>
+  return <main className="page technical-page"><div className="technical-top"><span className="eyebrow">technical portal</span><span className={`badge ${doc.status}`}>{statusLabel(doc.status)}</span></div><h1>{doc.title}</h1><p className="lead">{doc.summary}</p><aside className="portal-nav">{portalLinks.map(([id, label]) => { const page = productDocs.find((item) => item.id === id); return <a className={doc.id === id ? 'is-active' : ''} href={routeHref(page?.route ?? '/product')} key={id}>{label}</a> })}</aside>{doc.id === 'architecture' && <ArchitectureBlueprint />}{doc.id === 'system-architecture' && <SystemArchitectureExplorer />}<div className="doc-blocks">{doc.blocks.map((block) => <section key={block.heading}><h2>{block.heading}</h2><p>{block.body}</p>{block.bullets.length > 0 && <ul>{block.bullets.map((bullet) => <li key={bullet}>{bullet}</li>)}</ul>}</section>)}</div><footer className="page-footer"><a href={routeHref('/proofs')}>Proofs →</a><a href={DIAGNOSTIC_URL} target="_blank" rel="noreferrer" onClick={() => track('cohort_cta_click')}>Подать workflow</a></footer></main>
 }
 
 function NotFound() { return <main className="page"><span className="eyebrow">404</span><h1>Маршрут не найден.</h1><a className="text-link" href={routeHref('/')}>На главную →</a></main> }
