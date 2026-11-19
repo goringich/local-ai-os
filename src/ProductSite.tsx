@@ -4,6 +4,7 @@ import type { ProductDoc } from './product-docs/types'
 import type { Proof } from './proofs/types'
 import ArchitectureBlueprint from './ArchitectureBlueprint'
 import { OwnedPromotionSlot } from './OwnedPromotionSlot'
+import { ComparePage, DemoStudio, ExperiencePreview, ValuePage } from './ProductExperience'
 
 const DIAGNOSTIC_URL = 'https://t.me/a1gorithms?text=LOCAL%20AI%20OS%20%2F%20diagnostic-2026-07%3A%20%D1%85%D0%BE%D1%87%D1%83%20%D1%80%D0%B0%D0%B7%D0%BE%D0%B1%D1%80%D0%B0%D1%82%D1%8C%20%D0%BE%D0%B4%D0%B8%D0%BD%20%D0%BF%D0%BE%D0%B2%D1%82%D0%BE%D1%80%D1%8F%D1%8E%D1%89%D0%B8%D0%B9%D1%81%D1%8F%20workflow'
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, '')
@@ -32,6 +33,9 @@ function Header({ route }: { route: string }) {
   return <header className="site-header">
     <a className="wordmark" href={routeHref('/')}>LOCAL AI OS</a>
     <nav aria-label="Основная навигация">
+      <a className={route === '/demo' ? 'is-active' : ''} href={routeHref('/demo')}>Попробовать демо</a>
+      <a className={route === '/value' ? 'is-active' : ''} href={routeHref('/value')}>Что входит</a>
+      <a className={route === '/compare' ? 'is-active' : ''} href={routeHref('/compare')}>Сравнение</a>
       <a className={route.startsWith('/proofs') ? 'is-active' : ''} href={routeHref('/proofs')}>Proofs</a>
       <a className={productDocs.some((doc) => doc.route === route) ? 'is-active' : ''} href={routeHref('/product')}>Технический портал</a>
       <a href={routeHref('/security')}>Безопасность</a>
@@ -88,14 +92,15 @@ function Home() {
   useEffect(() => { fetch(`${BASE}/proofs/founder-context-control-001.json`).then((r) => r.json()).then(setProof).catch(() => setProof(null)) }, [])
   return <main>
     <section className="hero">
-      <div><span className="eyebrow">private Linux · Codex · owner-controlled</span><h1>Codex получает только нужный контекст, меняет разрешённое и оставляет результат, которому можно доверять.</h1><p>Когда агент заново читает систему, теряет scope или завершает задачу без проверки, LOCAL AI OS задаёт один наблюдаемый контур: контекст, граница записи, проверка, отчёт.</p><div className="hero-actions"><a className="button primary" href={DIAGNOSTIC_URL} target="_blank" rel="noreferrer" onClick={() => track('cohort_cta_click')}>Подать workflow на диагностику</a><a className="button quiet" href={routeHref('/proofs')}>Смотреть proofs</a></div></div>
+      <div><span className="eyebrow">private Linux · Codex · owner-controlled</span><h1>AI-агенты пишут код. LOCAL AI OS помогает не терять цель и подтверждать результат.</h1><p>Для долгих проектов недостаточно очередного промпта. Мы связываем актуальный контекст, границы доступа, выполнение и проверку в один воспроизводимый процесс. Начните с интерактивного примера — без регистрации и доступа к вашим данным.</p><div className="hero-actions"><a className="button primary" href={DIAGNOSTIC_URL} target="_blank" rel="noreferrer" onClick={() => track('cohort_cta_click')}>Подать workflow на диагностику</a><a className="button quiet" href={routeHref('/demo')}>Попробовать интерактивно →</a></div></div>
       <aside className="problem-card"><span>Observed failure</span><strong>лишний контекст<br />неверный scope<br />непроверенный handoff</strong><p>Не «универсальная AI OS», а контролируемый workflow для одного повторяющегося задания.</p></aside>
     </section>
     <section className="section"><div className="section-heading"><span>workflow</span><h2>Не магия автономии. Явная цепочка ответственности.</h2></div><Workflow /></section>
     {proof ? <ProofSummary proof={proof} /> : <section className="section"><p>Public-safe proof data unavailable while loading.</p></section>}
+    <ExperiencePreview />
     <DiagnosticOffer />
     <OwnedPromotionSlot />
-    <section className="section demo"><div className="section-heading"><span>demo flow</span><h2>Один workflow — от проблемы до evidence.</h2></div><div className="demo-grid"><article><strong>1. Baseline</strong><p>Фиксируем доступные поля до работы. Неснятые данные не оцениваем.</p></article><article><strong>2. Boundaries</strong><p>Определяем релевантный контекст, writable scope и команды проверки.</p></article><article><strong>3. Report</strong><p>Оставляем evidence, ограничения и следующий точный action владельцу.</p></article></div></section>
+    
     <section className="portal-bridge"><span>technical due diligence</span><h2>Полная архитектура не исчезла. Она доступна после результата.</h2><div>{portalLinks.slice(0, 8).map(([id, title]) => <a key={id} href={routeHref(productDocs.find((doc) => doc.id === id)?.route ?? '/product')}>{title} →</a>)}</div></section>
   </main>
 }
@@ -126,7 +131,12 @@ export function ProductSite() {
   const [route, setRoute] = useState(currentRoute)
   useEffect(() => { const onPop = () => setRoute(currentRoute()); window.addEventListener('popstate', onPop); return () => window.removeEventListener('popstate', onPop) }, [])
   const doc = useMemo(() => productDocs.find((item) => item.route === route), [route])
-  useEffect(() => { document.title = route === '/' ? 'LOCAL AI OS — proof-first workflow' : 'LOCAL AI OS' }, [route])
-  const body = route === '/' ? <Home /> : route === '/proofs' || route.startsWith('/proofs/') ? <Proofs route={route} /> : doc ? <TechnicalPage doc={doc} /> : <NotFound />
+  useEffect(() => { document.title = route === '/' ? 'LOCAL AI OS — контролируемая AI-разработка' : route === '/demo' ? 'Интерактивная демонстрация — LOCAL AI OS' : route === '/value' ? 'Что получает покупатель — LOCAL AI OS' : route === '/compare' ? 'Сравнение альтернатив — LOCAL AI OS' : 'LOCAL AI OS' }, [route])
+  const body = route === '/' ? <Home />
+    : route === '/demo' ? <main className="exp-detail-page"><section className="exp-detail-hero"><span className="exp-overline">LOCAL AI OS / TRY THE WORKFLOW</span><h1>Как выглядит работа с AI, когда у неё есть память и критерий завершения.</h1><p>Интерактивная учебная модель: выбери сценарий, меняй права и проверь результат. Никакой регистрации или доступа к реальным данным.</p></section><DemoStudio /></main>
+    : route === '/value' ? <ValuePage />
+    : route === '/compare' ? <ComparePage />
+    : route === '/proofs' || route.startsWith('/proofs/') ? <Proofs route={route} />
+    : doc ? <TechnicalPage doc={doc} /> : <NotFound />
   return <><a className="skip-link" href="#content">К содержанию</a><div className="site-shell"><Header route={route} /><div id="content">{body}</div><footer className="site-footer"><span>LOCAL AI OS · public product surface</span><a href={routeHref('/docs')}>Public/private boundary</a></footer></div></>
 }
