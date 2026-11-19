@@ -93,7 +93,17 @@ function Home() {
   return <main>
     <section className="hero">
       <div><span className="eyebrow">private Linux · Codex · owner-controlled</span><h1>AI-агенты пишут код. LOCAL AI OS помогает не терять цель и подтверждать результат.</h1><p>Для долгих проектов недостаточно очередного промпта. Мы связываем актуальный контекст, границы доступа, выполнение и проверку в один воспроизводимый процесс. Начните с интерактивного примера — без регистрации и доступа к вашим данным.</p><div className="hero-actions"><a className="button primary" href={DIAGNOSTIC_URL} target="_blank" rel="noreferrer" onClick={() => track('cohort_cta_click')}>Подать workflow на диагностику</a><a className="button quiet" href={routeHref('/demo')}>Попробовать интерактивно →</a></div></div>
-      <aside className="problem-card"><span>Observed failure</span><strong>лишний контекст<br />неверный scope<br />непроверенный handoff</strong><p>Не «универсальная AI OS», а контролируемый workflow для одного повторяющегося задания.</p></aside>
+      <aside className="hero-dashboard" aria-label="Схематический пример интерфейса, не реальные показатели">
+        <div className="hero-dashboard-top"><span>PROJECT CONTINUITY / EXAMPLE</span><span>SIMULATED</span></div>
+        <div className="hero-dashboard-core">
+          <div className="hero-dashboard-headline"><small>MISSION 001 / RESUME PROJECT</small><strong>Контекст восстановлен.<br />Следующий шаг известен.</strong></div>
+          <div className="hero-dashboard-steps"><span className="is-done">Цель</span><span className="is-done">Контекст</span><span className="is-done">Допуск</span><span>Проверка</span></div>
+          <div className="hero-dashboard-fact"><span>Current source</span><strong>Git + decisions</strong></div>
+          <div className="hero-dashboard-fact"><span>Write access</span><strong>allowlisted</strong></div>
+          <div className="hero-dashboard-fact"><span>Deployment</span><strong>not verified</strong></div>
+        </div>
+        <a href={routeHref('/demo')} className="hero-dashboard-open">Открыть интерактивный сценарий <span aria-hidden="true">↗</span></a>
+      </aside>
     </section>
     <section className="section"><div className="section-heading"><span>workflow</span><h2>Не магия автономии. Явная цепочка ответственности.</h2></div><Workflow /></section>
     {proof ? <ProofSummary proof={proof} /> : <section className="section"><p>Public-safe proof data unavailable while loading.</p></section>}
