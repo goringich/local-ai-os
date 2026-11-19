@@ -1,3 +1,22 @@
+/* First-screen interactive preview, explicitly synthetic. */
+.hero-dashboard { border:1px solid #3c5232; min-width:0; background:#101810; box-shadow:0 24px 90px rgba(0,0,0,.24); }
+.hero-dashboard-top { display:flex; justify-content:space-between; gap:10px; background:#192518; padding:16px 18px; border-bottom:1px solid #3a4e33; font:10px ui-monospace,monospace; letter-spacing:.05em; color:#b8c7ad; }
+.hero-dashboard-top span:last-child { color:var(--acid); }
+.hero-dashboard-core { padding:22px 20px 26px; }
+.hero-dashboard-headline { border-bottom:1px solid #3b4e35; padding-bottom:22px; }
+.hero-dashboard-headline small { color:var(--acid); font:10px ui-monospace,monospace; }
+.hero-dashboard-headline strong { display:block; margin:18px 0 0; font-size:clamp(25px,2.6vw,40px); line-height:1.15; font-weight:550; letter-spacing:-.05em; }
+.hero-dashboard-steps { display:flex; gap:5px; margin:22px 0 25px; }
+.hero-dashboard-steps span { flex:1; text-align:center; font:10px ui-monospace,monospace; color:#a6b49e; border-bottom:3px solid #344331; padding-bottom:8px; }
+.hero-dashboard-steps span.is-done { border-bottom-color:var(--acid); color:var(--acid); }
+.hero-dashboard-fact { display:flex; justify-content:space-between; gap:12px; padding:12px 0; border-bottom:1px solid #2d402a; font:12px ui-monospace,monospace; }
+.hero-dashboard-fact span { color:#99ab96; }
+.hero-dashboard-fact strong { color:#e7f1dd; text-align:right; font-weight:500; }
+.hero-dashboard-open { display:flex; align-items:center; justify-content:space-between; gap:12px; text-decoration:none; padding:20px; background:var(--acid); color:#10170b; font-weight:700; font-size:14px; }
+.hero-dashboard-open:hover { filter:brightness(1.09); }
+@media (max-width:850px) { .hero-dashboard { max-width:550px; } }
+@media (max-width:520px) { .hero-dashboard-steps span { font-size:9px; } }
+
 /* Buyer-facing experience: intentional isolation from legacy product portal styles. */
 .exp-home-sections { border-top:1px solid var(--line); }
 .exp-home-sections em, .exp-detail-page em, .exp-simulator em { color:var(--acid); font-style:normal; }
