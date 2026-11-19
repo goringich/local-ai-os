@@ -281,6 +281,10 @@ const COMPETITORS = [
   { name: 'Factory Missions', focus: 'Декомпозиция, параллельные исполнители, проверка', overlap: 'Миссии, продолжительная разработка, validation', link: 'https://docs.factory.com/missions/overview' },
   { name: 'GitHub Copilot agents', focus: 'Агенты в GitHub, IDE и cloud workflow', overlap: 'Проектный контекст, задачи, PR и review', link: 'https://docs.github.com/en/copilot/concepts/agent-capabilities/about-agents/about-github-copilot-agents' },
   { name: 'OpenHands', focus: 'Платформа разработки с агентами и enterprise control', overlap: 'Локальные и серверные агенты, контролируемая работа', link: 'https://www.openhands.dev/' },
+  { name: 'Letta Agent SDK', focus: 'Долговременная память и идентичность stateful AI-агентов', overlap: 'Продолжение сессий, память, восстановление состояния', link: 'https://www.letta.com/agent-sdk/' },
+  { name: 'OpenAI Codex / Agents API', focus: 'Долгие coding-задачи, сохранённые сессии и управляемая оркестрация', overlap: 'Контекст, агенты, recovery и проверка инженерной работы', link: 'https://developers.openai.com/api/docs/guides/agents-api/overview' },
+  { name: 'Claude Code', focus: 'Разработка с project memory, subagents и изолированными worktree', overlap: 'Память проекта, работа нескольких агентов, исполнительный цикл', link: 'https://code.claude.com/docs/en/memory' },
+  { name: 'Cline', focus: 'Локальный IDE/desktop coding agent с checkpoints и поддержкой разных моделей', overlap: 'Инструменты разработчика, undo, локальные модели и контролируемые правки', link: 'https://cline.bot/' },
 ]
 
 export function ComparePage() {
