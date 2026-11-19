@@ -7,6 +7,9 @@ Live site: [goringich.github.io/local-ai-os](https://goringich.github.io/local-a
 ## Start here
 
 - `/` is the proof-first acquisition page: one failure mode, one controlled workflow, an honest founder proof, and the founder-led paid diagnostic CTA.
+- `/demo` is an interactive, fully synthetic, client-side workflow simulator (context, permissions, attempt, verification and truthful outcome); **no model, repository or customer data is accessed**.
+- `/value` explains exact founder-led deliverables and lets visitors quantify their own hypothetical context-recovery cost (not claimed savings).
+- `/compare` documents competitor overlap using links to official product sources and explicitly labels differentiation as unproven until paired evaluations.
 - `/proofs` and `/proofs/<proof-id>` are shareable, public-safe evidence artifacts.
 - `/product`, `/architecture`, `/runtime`, `/context-memory`, `/codex-orchestrator`, `/project-atlas`, `/integrations`, `/security`, `/deployment`, `/acceptance`, `/operations`, `/recovery`, `/releases`, `/roadmap`, `/docs`, and `/faq` are the technical due-diligence portal.
 
@@ -43,7 +46,7 @@ Never public: customer source, private paths, prompts, responses, credentials, c
 
 The pilot remains a bounded implementation for one Linux workstation, up to three projects, over five working days. Diagnostic: 9,900 ₽, credited toward a 49,900 ₽ pilot. The product does not promise universal autonomy or an unrestricted shell bridge.
 
-The founder proof is not a customer case. Its metrics are aggregates from a sanitized telemetry rollup; fields without a recorded matched baseline are intentionally `unavailable`.
+The interactive sandbox is deterministic demonstration content, not a connected AI agent, working production installation, proof of completion, or customer trial. The founder proof is not a customer case. Its metrics are aggregates from a sanitized telemetry rollup; fields without a recorded matched baseline are intentionally `unavailable`.
 
 ## Documentation system
 
@@ -54,6 +57,9 @@ The founder proof is not a customer case. Its metrics are aggregates from a sani
 - [Technical architecture](./docs/technical-architecture.md)
 - [Product technical manual](./docs/product-technical.md)
 - [Release pipeline](./docs/release-pipeline.md)
+- [Buyer experience, interactive demo and acceptance boundaries](./docs/buyer-experience-spec.md)
+- [Competitive positioning and evaluation plan](./docs/competitive-positioning-2026.md)
+- [System architecture and source-of-truth inventory](./docs/architecture-reference.md)
 
 ## Development and verification
 
@@ -61,6 +67,7 @@ The founder proof is not a customer case. Its metrics are aggregates from a sani
 npm install
 npm run docs:build
 npm run check:proofs
+npm run check:demo
 npm run qa
 ```
 
