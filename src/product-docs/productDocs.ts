@@ -64,7 +64,7 @@ export const productDocs: ProductDoc[] = [
     "blocks": [
       {
         "heading": "One system, several distinct authorities",
-        "body": "The private System comprises core control/retrieval/governance in \\`goringich/__home_organized\\`, bounded worker queue in \\`goringich/codex-orchestrator\\`, supporting \\`system-bootstrap\\`, Project Atlas's UI role in \\`home-admin\\`, and human memory in Obsidian. The public \\`local-ai-os\\` product site/release source is **outside the strict runtime core**. Other customer/product repositories are not silently included merely because they are accessible.",
+        "body": "The private System comprises core control/retrieval/governance in \\`private System control repository\\`, bounded worker queue in \\`private bounded executor repository\\`, supporting \\`system-bootstrap\\`, Project Atlas's UI role in \\`home-admin\\`, and human memory in Obsidian. The public \\`local-ai-os\\` product site/release source is **outside the strict runtime core**. Other customer/product repositories are not silently included merely because they are accessible.",
         "bullets": []
       },
       {
@@ -130,9 +130,9 @@ export const productDocs: ProductDoc[] = [
           "Product description: https://github.com/goringich/local-ai-os/blob/main/docs/technical-architecture.md",
           "Product terms: https://github.com/goringich/local-ai-os/blob/main/docs/offer.md",
           "Customer proof contract: https://github.com/goringich/local-ai-os/blob/main/docs/proof-contract.md",
-          "System control source (private, access-controlled): \\`goringich/__home_organized\\`.",
-          "Queue worker source (private, access-controlled): \\`goringich/codex-orchestrator\\`.",
-          "Atlas code (private, access-controlled): \\`goringich/home-admin\\`."
+          "System control source (private, access-controlled): \\`private System control repository\\`.",
+          "Queue worker source (private, access-controlled): \\`private bounded executor repository\\`.",
+          "Atlas code (private, access-controlled): \\`private Project Atlas implementation\\`."
         ]
       },
       {
