@@ -61,7 +61,6 @@ const publicProductDocs = [
   'docs/buyer-experience-spec.md',
   'docs/competitive-positioning-2026.md',
   'docs/product/16-full-architecture.md',
-  'src/product-docs/productDocs.ts',
 ]
 for (const file of publicProductDocs) {
   const content = read(file)
