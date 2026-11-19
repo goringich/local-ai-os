@@ -46,6 +46,27 @@ The initial customer is a technical owner of a private Linux workstation with a 
 - LOCAL AI OS question: does contextual memory combined with mission identity, exact-version verification and developer delivery work better than memory alone?
 - Not valid: claiming Letta cannot persist memory.
 
+### OpenAI Codex and Agents API
+
+- Official: https://developers.openai.com/api/docs/guides/agents-api/overview
+- Known overlap: long-running managed agent sessions, context compaction, orchestration and recovery.
+- LOCAL AI OS question: does the founder-led local Linux workflow with specific privacy, recovery and external outcome checks justify additional integration effort?
+- Not valid: saying Codex has no continuity, no orchestration or cannot verify its own changes.
+
+### Claude Code
+
+- Official: https://code.claude.com/docs/en/memory
+- Known overlap: project memory across sessions, subagent workflows and isolated worktrees.
+- LOCAL AI OS question: can cross-tool governance and source/runtime outcome separation add practical value rather than replace this agent?
+- Not valid: claiming Claude Code forgets every session or lacks project memory.
+
+### Cline
+
+- Official: https://cline.bot/
+- Known overlap: developer agent, local model/provider choice, checkpoints and code change recovery.
+- LOCAL AI OS question: does the external mission and acceptance layer improve a repeated workflow enough to pay for integration?
+- Not valid: saying local Ollama models or rollback checkpoints are exclusive LOCAL AI OS features.
+
 ## Falsifiable positioning
 
 **Current differentiation proposal, not proven superiority:**
