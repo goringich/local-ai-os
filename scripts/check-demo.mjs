@@ -5,6 +5,8 @@ import { execFileSync } from 'node:child_process'
 const root = new URL('../', import.meta.url)
 const read = (path) => readFileSync(new URL(path, root), 'utf8')
 const source = read('src/ProductExperience.tsx')
+const architecture = read('src/SystemArchitectureExplorer.tsx')
+const architectureCss = read('src/architecture-explorer.css')
 const policy = read('src/demo-policy.mjs')
 const site = read('src/ProductSite.tsx')
 const css = read('src/product-experience.css')
@@ -39,6 +41,10 @@ for (const route of ['/demo', '/value', '/compare']) {
   assert.ok(routeCheck.includes("'" + route + "'"), 'Route verification lacks ' + route)
 }
 assert.ok(site.includes('<ExperiencePreview />'), 'Homepage does not expose interactive experience')
+assert.equal((architecture.match(/id: 'L(?:10|[0-9])'/g) ?? []).length, 11, 'Architecture explorer must cover exactly eleven layers')
+assert.ok(site.includes('<SystemArchitectureExplorer />'), 'System architecture route lacks interactive explorer')
+assert.ok(architecture.includes('aria-pressed={selected.id === layer.id}'), 'Architecture picker lacks keyboard-friendly selection semantics')
+assert.ok(architectureCss.includes('@media (max-width:560px)'), 'Architecture explorer must support small viewports')
 assert.ok(css.includes('@media (max-width:600px)'), 'Mobile experience layout missing')
 assert.ok(css.includes('prefers-reduced-motion'), 'Reduced motion support missing')
 
