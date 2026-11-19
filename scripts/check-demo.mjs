@@ -1,0 +1,56 @@
+import { readFileSync } from 'node:fs'
+import assert from 'node:assert/strict'
+
+const root = new URL('../', import.meta.url)
+const read = (path) => readFileSync(new URL(path, root), 'utf8')
+const source = read('src/ProductExperience.tsx')
+const site = read('src/ProductSite.tsx')
+const css = read('src/product-experience.css')
+const router = read('scripts/build-static-routes.mjs')
+const routeCheck = read('scripts/check-routes.mjs')
+
+const required = [
+  ['three differentiated scenarios', 'id: \'resume\''],
+  ['defect scenario', 'id: \'fix\''],
+  ['privacy scenario', 'id: \'privacy\''],
+  ['six-step interaction', "['06', 'Отчёт']"],
+  ['accessible stepper', 'aria-current={stage === index'],
+  ['permission toggle', 'setViolateScope(value)'],
+  ['revalidation on policy change', 'setEvaluated(false)'],
+  ['bounded status', 'ОЖИДАЕТ ПРОВЕРКИ'],
+  ['scope denial', 'BLOCKED · POLICY'],
+  ['outcome not measured', 'НЕ ПРОВЕРЕНО'],
+  ['honest simulation banner', 'СИМУЛЯЦИЯ · БЕЗ ДОСТУПА К ПРОЕКТАМ'],
+  ['no connected execution claim', 'не запускает AI'],
+  ['baseline disclaimer', 'не прогноз эффекта'],
+  ['buyer deliverables', '49 900 ₽'],
+  ['buyer limitations', 'не self-service'],
+  ['comparison primary sources', 'https://docs.factory.com/missions/overview'],
+]
+for (const [description, fragment] of required) {
+  assert.ok(source.includes(fragment), 'Demo is missing '+ description)
+}
+
+for (const route of ['/demo', '/value', '/compare']) {
+  assert.ok(site.includes("route === '" + route + "'"), 'Product router lacks ' + route)
+  assert.ok(router.includes("'" + route + "'"), 'Static route generator lacks ' + route)
+  assert.ok(routeCheck.includes("'" + route + "'"), 'Route verification lacks ' + route)
+}
+assert.ok(site.includes('<ExperiencePreview />'), 'Homepage does not expose interactive experience')
+assert.ok(css.includes('@media (max-width:600px)'), 'Mobile experience layout missing')
+assert.ok(css.includes('prefers-reduced-motion'), 'Reduced motion support missing')
+
+const forbidden = [
+  /fetch\s*\(/,
+  /localStorage/,
+  /sessionStorage/,
+  /navigator\.sendBeacon/,
+  /WebSocket/,
+  /dangerouslySetInnerHTML/,
+  /https?:\/\/[^'"]*(?:api\.openai\.com|localhost|127\.0\.0\.1)/,
+]
+for (const pattern of forbidden) {
+  assert.ok(!pattern.test(source), 'Demo unexpectedly connects to runtime or unsafe browser API: ' + pattern)
+}
+
+console.log('Demo source contract OK: 3 scenarios, 6 stages, fail-closed policy, 3 static routes, no runtime bridge')
