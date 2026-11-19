@@ -5,6 +5,7 @@ import { execFileSync } from 'node:child_process'
 const root = new URL('../', import.meta.url)
 const read = (path) => readFileSync(new URL(path, root), 'utf8')
 const source = read('src/ProductExperience.tsx')
+const agentInterfaces = read('src/AgentInterfaces.tsx')
 const architecture = read('src/SystemArchitectureExplorer.tsx')
 const architectureCss = read('src/architecture-explorer.css')
 const policy = read('src/demo-policy.mjs')
@@ -43,6 +44,9 @@ for (const route of ['/demo', '/whitepaper', '/value', '/compare']) {
   assert.ok(routeCheck.includes("'" + route + "'"), 'Route verification lacks ' + route)
 }
 assert.ok(site.includes('<ExperiencePreview />'), 'Homepage does not expose interactive experience')
+assert.ok(source.includes('<AgentInterfaces />'), 'Buyer site must explain the role of ChatGPT and Codex')
+assert.ok(agentInterfaces.includes('SIMULATED') && agentInterfaces.includes('не подключённый ChatGPT'), 'Integration examples must be identified as simulations')
+assert.ok(agentInterfaces.includes('merge') || agentInterfaces.includes('Merge'), 'Executor authority must remain explicit')
 assert.equal((whitepaper.match(/^## [0-9]+\. /gm) ?? []).length, 33, 'Full whitepaper must contain 33 chapters')
 assert.ok(whitepaperUI.includes('aria-current={item.id === section'), 'Reader must expose current chapter to assistive technology')
 assert.ok(site.includes('lazy(() => import(\'./TechnicalWhitepaper\'))'), 'Whitepaper must be code-split')
