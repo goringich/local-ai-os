@@ -26,6 +26,10 @@ on:
       - 'vite.config.ts'
       - '.github/workflows/product-browser-acceptance.yml'
 
+concurrency:
+  group: product-browser-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
