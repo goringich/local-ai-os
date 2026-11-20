@@ -11,6 +11,7 @@ mkdirSync(SHOT_DIR, { recursive: true })
 
 const server = spawn('npm', ['run', 'preview', '--', '--host', '127.0.0.1', '--port', '4173', '--strictPort'], {
   cwd: ROOT,
+  detached: true,
   stdio: ['ignore', 'pipe', 'pipe'],
   env: { ...process.env, CI: '1' },
 })
@@ -33,8 +34,9 @@ async function ready() {
 let browser
 async function pageFor(context, route, errors) {
   const page = await context.newPage()
+  page.setDefaultTimeout(8000)
   page.on('pageerror', error => { errors.push(route + ': ' + error.message) })
-  const response = await page.goto(BASE + route, { waitUntil: 'networkidle' })
+  const response = await page.goto(BASE + route, { waitUntil: 'networkidle', timeout: 20000 })
   assert.equal(response?.status(), 200, 'Direct route must return 200: ' + route)
   assert.ok(await page.locator('main').count(), 'A main landmark is required: ' + route)
   return page
@@ -135,5 +137,7 @@ try {
   report('no uncaught JavaScript errors across desktop/mobile journeys')
 } finally {
   await browser?.close()
-  server.kill('SIGTERM')
+  try { process.kill(-server.pid, 'SIGTERM') } catch { server.kill('SIGTERM') }
+  server.stdout.destroy()
+  server.stderr.destroy()
 }
