@@ -15,6 +15,12 @@ const server = spawn('npm', ['run', 'preview', '--', '--host', '127.0.0.1', '--p
   stdio: ['ignore', 'pipe', 'pipe'],
   env: { ...process.env, CI: '1' },
 })
+const watchdog = setTimeout(() => {
+  console.error('FAIL browser: acceptance watchdog (150 seconds), terminating preview server')
+  try { process.kill(-server.pid, 'SIGTERM') } catch { server.kill('SIGTERM') }
+  process.exit(1)
+}, 150000)
+watchdog.unref()
 let serverLog = ''
 server.stdout.on('data', chunk => { serverLog += String(chunk) })
 server.stderr.on('data', chunk => { serverLog += String(chunk) })
@@ -36,6 +42,7 @@ async function pageFor(context, route, errors) {
   const page = await context.newPage()
   page.setDefaultTimeout(8000)
   page.on('pageerror', error => { errors.push(route + ': ' + error.message) })
+  console.log('START browser route: ' + route)
   const response = await page.goto(BASE + route, { waitUntil: 'networkidle', timeout: 20000 })
   assert.equal(response?.status(), 200, 'Direct route must return 200: ' + route)
   assert.ok(await page.locator('main').count(), 'A main landmark is required: ' + route)
@@ -136,6 +143,7 @@ try {
   assert.deepEqual(errors, [], 'Uncaught browser exceptions: ' + errors.join('; '))
   report('no uncaught JavaScript errors across desktop/mobile journeys')
 } finally {
+  clearTimeout(watchdog)
   await browser?.close()
   try { process.kill(-server.pid, 'SIGTERM') } catch { server.kill('SIGTERM') }
   server.stdout.destroy()
