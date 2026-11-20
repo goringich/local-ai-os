@@ -8,5 +8,12 @@ const routes = ['/', '/demo', '/whitepaper', '/value', '/compare', '/proofs', ..
 for (const route of routes) {
   const location = route === '/' ? resolve(root, 'dist/index.html') : resolve(root, 'dist', route.slice(1), 'index.html')
   if (!existsSync(location)) throw new Error(`Missing static route artifact: ${route}`)
+  if (route !== '/') {
+    const html = readFileSync(location, 'utf8')
+    const canonical = 'https://goringich.github.io/local-ai-os' + route
+    if (!html.includes('<link rel="canonical" href="' + canonical + '"')) throw new Error('Invalid canonical URL for ' + route)
+    if (!html.includes('<meta property="og:url" content="' + canonical + '"')) throw new Error('Invalid social sharing URL for ' + route)
+    if (!/<title>[^<]+<\/title>/.test(html)) throw new Error('Missing page title for ' + route)
+  }
 }
 console.log(`Direct static routes OK: ${routes.length}`)
