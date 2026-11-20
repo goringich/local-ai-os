@@ -32,7 +32,7 @@ permissions:
 jobs:
   browser-acceptance:
     name: Browser buyer-journey acceptance
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04 # Pin supported Playwright runtime; ubuntu-latest has moved to unsupported ubuntu26.04
     timeout-minutes: 20
     steps:
       - name: Checkout
