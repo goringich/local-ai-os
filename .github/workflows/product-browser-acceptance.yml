@@ -36,7 +36,8 @@ permissions:
 jobs:
   browser-acceptance:
     name: Browser buyer-journey acceptance
-    runs-on: ubuntu-24.04 # Pin supported Playwright runtime; ubuntu-latest has moved to unsupported ubuntu26.04
+    runs-on: ubuntu-24.04
+    container: mcr.microsoft.com/playwright:v1.58.2-noble # Official prebuilt browser + OS dependencies
     timeout-minutes: 20
     steps:
       - name: Checkout
@@ -58,7 +59,7 @@ jobs:
       - name: Install disposable browser test harness
         run: |
           npm install --no-save --package-lock=false playwright@1.58.2
-          npx --no-install playwright install --with-deps chromium
+          # Chromium and Linux dependencies are preinstalled in the pinned official image.
 
       - name: Run real Chromium buyer journey tests
         run: node scripts/browser-product-e2e.mjs
