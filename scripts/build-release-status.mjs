@@ -18,17 +18,18 @@ const payload = {
   product: 'LOCAL AI OS',
   version: pkg.version,
   channel: ref === 'main' ? 'production' : 'preview',
-  state: process.env.GITHUB_ACTIONS ? 'building' : 'local-preview',
+  state: 'source-snapshot',
+  deploymentVerification: 'not-asserted-by-build',
   sourceRef: ref,
   commit: sha,
   generatedAt: process.env.GITHUB_RUN_ID ? new Date().toISOString() : 'local-dev',
   deploymentUrl: 'https://goringich.github.io/local-ai-os/',
   workflowUrl,
   checks: [
-    { name: 'offer-contract', state: 'pass', summary: 'Commercial invariants and anti-portfolio coupling are checked.' },
-    { name: 'lint', state: process.env.GITHUB_ACTIONS ? 'running' : 'pending', summary: 'ESLint checks React and TypeScript code.' },
-    { name: 'build', state: process.env.GITHUB_ACTIONS ? 'running' : 'pending', summary: 'TypeScript and Vite produce the production bundle.' },
-    { name: 'docs-sync', state: 'pass', summary: 'Repo docs define the Obsidian sync targets and can be mirrored with docs:sync.' },
+    { name: 'offer-contract', state: 'not-asserted', summary: 'See the linked CI run for offer-check results; this source snapshot is generated before validation.' },
+    { name: 'lint', state: 'not-asserted', summary: 'See linked CI run for actual ESLint verdict; no result can be asserted by this generator.' },
+    { name: 'build', state: 'not-asserted', summary: 'This file is written before build completion; inspect CI for the exact commit.' },
+    { name: 'docs-sync', state: 'not-asserted', summary: 'Reviewed sync policy is in source; executed sync/host parity requires separate evidence.' },
   ],
 }
 
@@ -40,6 +41,7 @@ writeFileSync(
     `- Version: ${payload.version}\n` +
     `- Channel: ${payload.channel}\n` +
     `- State: ${payload.state}\n` +
+    `- Deployment verification: ${payload.deploymentVerification}\n` +
     `- Source ref: ${payload.sourceRef}\n` +
     `- Commit: ${payload.commit}\n` +
     `- Generated: ${payload.generatedAt}\n` +
