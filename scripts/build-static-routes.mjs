@@ -32,7 +32,7 @@ function metadataFor(route) {
 
 function setMeta(html, pattern, value, route) {
   if (!pattern.test(html)) throw new Error('Missing HTML metadata for ' + route + ': ' + pattern)
-  return html.replace(pattern, (_, prefix, suffix) => prefix + value + suffix)
+  return html.replace(pattern, (_, prefix, _old, suffix) => prefix + value + suffix)
 }
 
 function renderHead(route) {
