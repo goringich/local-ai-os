@@ -86,6 +86,12 @@ In GitHub Actions it uses:
 
 Locally it falls back to git metadata and stable `local-dev` generation, so repeated local runs do not churn timestamps.
 
+## Status JSON is a source snapshot, not proof of deployment
+
+The static generator runs **before** CI and before GitHub Pages deployment, so a file embedded in the bundle cannot truthfully say that its own build, Pages deployment, live browser path, or customer acceptance has succeeded. The published `/release-status.json` therefore uses `state=source-snapshot`, `deploymentVerification=not-asserted-by-build`, and `checks[].state=not-asserted`. Verify actual status against the linked workflow run, GitHub Pages deploy outcome, live URL and, separately, the customer acceptance report.
+
+Never infer current machine or production service state from a build-time status file. `npm run check:release-status` enforces this boundary inside the canonical QA sequence.
+
 ## Required release evidence
 
 Every release should leave these artifacts:

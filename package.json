@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "release:status": "node scripts/build-release-status.mjs",
+    "check:release-status": "node scripts/check-release-status.mjs",
     "build": "npm run docs:build && tsc -b && vite build && node scripts/build-static-routes.mjs",
     "lint": "eslint .",
     "preview": "vite preview",
@@ -22,7 +23,7 @@
     "qa:product-standard": "node scripts/check-product-standard.mjs",
     "qa:product-standard:host": "local-ai-control product doctor --repo . --format json",
     "docs:sync": "node scripts/sync-obsidian-docs.mjs",
-    "qa": "npm run release:status && npm run docs:build && npm run check:offer && npm run check:docs && npm run check:docs-sync && npm run check:proofs && npm run promo:check && npm run check:ui && npm run check:demo && npm run qa:product-standard && npm run check:customer-package && npm run lint && npm run build && npm run check:routes && npm audit --audit-level=high",
+    "qa": "npm run release:status && npm run check:release-status && npm run docs:build && npm run check:offer && npm run check:docs && npm run check:docs-sync && npm run check:proofs && npm run promo:check && npm run check:ui && npm run check:demo && npm run qa:product-standard && npm run check:customer-package && npm run lint && npm run build && npm run check:routes && npm audit --audit-level=high",
     "check:docs-sync": "node --test scripts/tests/sync-obsidian-docs.test.mjs"
   },
   "dependencies": {
