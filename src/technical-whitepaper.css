@@ -1,0 +1,64 @@
+/* Standalone, static and searchable technical whitepaper. */
+.whitepaper-page { min-height:calc(100vh - 180px); }
+.whitepaper-page em { font-style:normal; color:var(--acid); }
+.whitepaper-hero { padding:clamp(65px,9vw,118px) 0 62px; border-bottom:1px solid var(--line); }
+.whitepaper-eyebrow { color:var(--acid); font:12px ui-monospace,monospace; letter-spacing:.1em; }
+.whitepaper-hero h1 { max-width:1250px; font-size:clamp(45px,7vw,104px); }
+.whitepaper-hero>p { font-size:clamp(18px,2vw,27px); line-height:1.45; max-width:900px; color:#ced9ca; }
+.whitepaper-metadata { display:flex; flex-wrap:wrap; gap:12px; margin-top:38px; }
+.whitepaper-metadata span { border:1px solid #45603a; background:#121b10; color:#d4eea1; padding:9px 13px; font:12px ui-monospace,monospace; }
+.whitepaper-intro { max-width:1120px; padding:38px 0 55px; font-size:15px; color:#c8d2c5; line-height:1.7; }
+.whitepaper-intro h2 { font-size:30px; margin:25px 0; }
+.whitepaper-intro blockquote { border-left:3px solid var(--acid); padding:8px 24px; margin:10px 0; background:#151b14; }
+.whitepaper-layout { display:grid; grid-template-columns:minmax(245px,.32fr) minmax(0,.68fr); gap:0; border:1px solid var(--line); align-items:start; background:#0c110d; }
+.whitepaper-sidebar { position:sticky; top:100px; min-width:0; max-height:calc(100vh - 110px); overflow-y:auto; scrollbar-width:thin; border-right:1px solid var(--line); }
+.whitepaper-sidebar-head { display:flex; justify-content:space-between; align-items:center; color:var(--acid); font:12px ui-monospace,monospace; padding:25px 22px; border-bottom:1px solid var(--line); }
+.whitepaper-sidebar label { display:block; color:var(--muted); font-size:12px; margin:22px 18px 10px; }
+.whitepaper-sidebar input { display:block; background:#151e16; color:var(--ink); border:1px solid #44543f; width:calc(100% - 36px); margin:0 18px 20px; padding:13px; border-radius:0; font:14px ui-sans-serif,system-ui; }
+.whitepaper-sidebar nav { display:flex; flex-direction:column; padding:0; gap:0; }
+.whitepaper-sidebar nav button { display:flex; align-items:start; gap:12px; width:100%; text-align:left; background:transparent; color:#c6d1c1; padding:16px 20px; border:0; border-top:1px solid #263025; cursor:pointer; }
+.whitepaper-sidebar nav button span { flex:0 0 27px; font:11px ui-monospace,monospace; color:var(--acid); }
+.whitepaper-sidebar nav button strong { font-size:13px; line-height:1.45; font-weight:500; }
+.whitepaper-sidebar nav button:hover { background:#1e2b1b; }
+.whitepaper-sidebar nav button.whitepaper-chapter-active { background:var(--acid); color:#13160d; }
+.whitepaper-sidebar nav button.whitepaper-chapter-active span { color:#13160d; }
+.whitepaper-empty { font-size:13px; color:var(--muted); padding:15px 20px; }
+.whitepaper-article { min-width:0; padding:clamp(20px,4vw,66px); }
+.whitepaper-article-top { display:flex; justify-content:space-between; gap:20px; color:var(--acid); font:12px ui-monospace,monospace; border-bottom:1px solid var(--line); padding-bottom:20px; }
+.whitepaper-rendered h2 { font-size:clamp(31px,3.9vw,61px); line-height:1.08; margin:36px 0 30px; }
+.whitepaper-rendered h3 { font-size:clamp(23px,2.4vw,33px); font-weight:550; letter-spacing:-.045em; margin:38px 0 18px; }
+.whitepaper-rendered h4 { font-size:19px; margin:25px 0 12px; }
+.whitepaper-rendered p,.whitepaper-rendered li { color:#cbd6c8; font-size:15px; line-height:1.8; overflow-wrap:anywhere; }
+.whitepaper-rendered p { margin:0 0 19px; }
+.whitepaper-rendered ol,.whitepaper-rendered ul { padding-left:22px; margin:18px 0 26px; }
+.whitepaper-rendered li { margin:6px 0; padding-left:4px; }
+.whitepaper-rendered a,.whitepaper-intro a { color:var(--acid); text-underline-offset:3px; }
+.whitepaper-rendered strong { color:#edf4e8; font-weight:650; }
+.whitepaper-rendered code { font:13px ui-monospace,monospace; background:#1e2a1c; color:#d6f4a1; padding:2px 5px; overflow-wrap:anywhere; }
+.whitepaper-rendered pre { overflow:auto; background:#050906; border:1px solid #2b4429; padding:22px; margin:25px 0; max-width:100%; }
+.whitepaper-rendered pre code { color:#d4eed0; background:transparent; padding:0; white-space:pre; line-height:1.7; }
+.whitepaper-rendered blockquote { background:#151c13; border-left:3px solid var(--acid); padding:19px 22px; margin:20px 0; }
+.whitepaper-rendered blockquote p { margin:0; }
+.whitepaper-rendered hr { border:0; border-top:1px solid var(--line); margin:45px 0; }
+.whitepaper-table-scroll { overflow-x:auto; max-width:100%; margin:24px 0 32px; border:1px solid var(--line); }
+.whitepaper-table-scroll table { min-width:480px; width:100%; border-collapse:collapse; }
+.whitepaper-table-scroll th,.whitepaper-table-scroll td { border:1px solid var(--line); padding:13px 17px; text-align:left; vertical-align:top; font-size:13px; line-height:1.6; color:#bdccba; }
+.whitepaper-table-scroll th { background:#192417; color:#e6f4d6; font-weight:650; }
+.whitepaper-pagination { display:flex; gap:14px; justify-content:space-between; border-top:1px solid var(--line); padding-top:30px; margin-top:65px; }
+.whitepaper-pagination button { cursor:pointer; background:#192619; border:1px solid #496044; color:var(--acid); padding:13px 18px; font:14px ui-sans-serif,system-ui; }
+.whitepaper-pagination button:disabled { color:#6e816c; cursor:not-allowed; border-color:var(--line); background:none; }
+.whitepaper-footer { display:flex; flex-wrap:wrap; gap:20px; justify-content:space-between; padding:50px 0 90px; color:var(--muted); font-size:13px; line-height:1.7; border-bottom:1px solid var(--line); }
+.whitepaper-footer a { color:var(--acid); text-decoration:none; }
+@media (max-width:1000px) {
+  .whitepaper-layout { grid-template-columns:1fr; }
+  .whitepaper-sidebar { position:static; max-height:360px; overflow-y:auto; border-right:0; border-bottom:1px solid var(--line); }
+}
+@media (max-width:520px) {
+  .whitepaper-sidebar { max-height:300px; }
+  .whitepaper-article { padding:20px; }
+  .whitepaper-pagination { flex-direction:column; }
+  .whitepaper-hero h1 { font-size:clamp(43px,12vw,65px); }
+}
+@media (prefers-reduced-motion:reduce) {
+  .whitepaper-page * { scroll-behavior:auto!important; }
+}

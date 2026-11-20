@@ -4,6 +4,7 @@
   "documents": [
     {"id":"product","route":"/product","file":"00-overview.md","status":"stable"},
     {"id":"architecture","route":"/architecture","file":"01-architecture.md","status":"stable"},
+    {"id":"system-architecture","route":"/system-architecture","file":"16-full-architecture.md","status":"experimental"},
     {"id":"runtime","route":"/runtime","file":"02-runtime.md","status":"experimental"},
     {"id":"context-memory","route":"/context-memory","file":"03-context-memory.md","status":"stable"},
     {"id":"codex-orchestrator","route":"/codex-orchestrator","file":"04-codex-orchestrator.md","status":"stable"},

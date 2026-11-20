@@ -1,0 +1,74 @@
+name: product-browser-acceptance
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'docs/**'
+      - 'public/**'
+      - 'scripts/**'
+      - 'index.html'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'vite.config.ts'
+      - '.github/workflows/product-browser-acceptance.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'docs/**'
+      - 'public/**'
+      - 'scripts/**'
+      - 'index.html'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'vite.config.ts'
+      - '.github/workflows/product-browser-acceptance.yml'
+
+concurrency:
+  group: product-browser-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  browser-acceptance:
+    name: Browser buyer-journey acceptance
+    runs-on: ubuntu-24.04
+    container: mcr.microsoft.com/playwright:v1.58.2-noble # Official prebuilt browser + OS dependencies
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install existing product dependencies
+        run: npm ci
+
+      - name: Build production site and nested routes
+        run: npm run build
+
+      # Browser tooling is CI-only; do not introduce it into the public runtime dependency set.
+      - name: Install disposable browser test harness
+        run: |
+          npm install --no-save --package-lock=false playwright@1.58.2
+          # Chromium and Linux dependencies are preinstalled in the pinned official image.
+
+      - name: Run real Chromium buyer journey tests
+        run: node scripts/browser-product-e2e.mjs
+
+      - name: Save desktop/mobile screenshots
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: product-browser-acceptance
+          path: test-artifacts/product-browser/
+          retention-days: 7
+          if-no-files-found: ignore

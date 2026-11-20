@@ -1,14 +1,18 @@
-import { useEffect, useMemo, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import { productDocs } from './product-docs/productDocs'
 import type { ProductDoc } from './product-docs/types'
 import type { Proof } from './proofs/types'
 import ArchitectureBlueprint from './ArchitectureBlueprint'
 import { OwnedPromotionSlot } from './OwnedPromotionSlot'
+import { ComparePage, DemoStudio, ExperiencePreview, ValuePage } from './ProductExperience'
+import { SystemArchitectureExplorer } from './SystemArchitectureExplorer'
+
+const TechnicalWhitepaper = lazy(() => import('./TechnicalWhitepaper'))
 
 const DIAGNOSTIC_URL = 'https://t.me/a1gorithms?text=LOCAL%20AI%20OS%20%2F%20diagnostic-2026-07%3A%20%D1%85%D0%BE%D1%87%D1%83%20%D1%80%D0%B0%D0%B7%D0%BE%D0%B1%D1%80%D0%B0%D1%82%D1%8C%20%D0%BE%D0%B4%D0%B8%D0%BD%20%D0%BF%D0%BE%D0%B2%D1%82%D0%BE%D1%80%D1%8F%D1%8E%D1%89%D0%B8%D0%B9%D1%81%D1%8F%20workflow'
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, '')
 const portalLinks = [
-  ['product', 'Продукт'], ['architecture', 'Архитектура'], ['runtime', 'Runtime'], ['context-memory', 'Context/RAG'],
+  ['product', 'Продукт'], ['architecture', 'Архитектура'], ['system-architecture', 'Все уровни системы'], ['runtime', 'Runtime'], ['context-memory', 'Context/RAG'],
   ['codex-orchestrator', 'Codex'], ['project-atlas', 'Atlas'], ['security', 'Безопасность'], ['deployment', 'Внедрение'],
   ['integrations', 'Интеграции'], ['acceptance', 'Приёмка'], ['operations', 'Эксплуатация'], ['recovery', 'Recovery'],
   ['releases', 'Релизы'], ['roadmap', 'Roadmap'], ['docs', 'Документация'], ['faq', 'FAQ'],
@@ -32,10 +36,13 @@ function Header({ route }: { route: string }) {
   return <header className="site-header">
     <a className="wordmark" href={routeHref('/')}>LOCAL AI OS</a>
     <nav aria-label="Основная навигация">
+      <a className={route === '/demo' ? 'is-active' : ''} href={routeHref('/demo')}>Попробовать демо</a>
+      <a className={route === '/value' ? 'is-active' : ''} href={routeHref('/value')}>Что входит</a>
+      <a className={route === '/compare' ? 'is-active' : ''} href={routeHref('/compare')}>Сравнение</a>
       <a className={route.startsWith('/proofs') ? 'is-active' : ''} href={routeHref('/proofs')}>Proofs</a>
       <a className={productDocs.some((doc) => doc.route === route) ? 'is-active' : ''} href={routeHref('/product')}>Технический портал</a>
       <a href={routeHref('/security')}>Безопасность</a>
-      <a href={routeHref('/docs')}>Docs</a>
+      <a className={route === '/whitepaper' ? 'is-active' : ''} href={routeHref('/whitepaper')}>Полная спецификация</a>
     </nav>
     <a className="header-cta" href={DIAGNOSTIC_URL} target="_blank" rel="noreferrer" onClick={() => track('cohort_cta_click')}>Диагностика · 9 900 ₽</a>
   </header>
@@ -88,15 +95,26 @@ function Home() {
   useEffect(() => { fetch(`${BASE}/proofs/founder-context-control-001.json`).then((r) => r.json()).then(setProof).catch(() => setProof(null)) }, [])
   return <main>
     <section className="hero">
-      <div><span className="eyebrow">private Linux · Codex · owner-controlled</span><h1>Codex получает только нужный контекст, меняет разрешённое и оставляет результат, которому можно доверять.</h1><p>Когда агент заново читает систему, теряет scope или завершает задачу без проверки, LOCAL AI OS задаёт один наблюдаемый контур: контекст, граница записи, проверка, отчёт.</p><div className="hero-actions"><a className="button primary" href={DIAGNOSTIC_URL} target="_blank" rel="noreferrer" onClick={() => track('cohort_cta_click')}>Подать workflow на диагностику</a><a className="button quiet" href={routeHref('/proofs')}>Смотреть proofs</a></div></div>
-      <aside className="problem-card"><span>Observed failure</span><strong>лишний контекст<br />неверный scope<br />непроверенный handoff</strong><p>Не «универсальная AI OS», а контролируемый workflow для одного повторяющегося задания.</p></aside>
+      <div><span className="eyebrow">private Linux · Codex · owner-controlled</span><h1>AI-агенты пишут код. LOCAL AI OS помогает не терять цель и подтверждать результат.</h1><p>Для долгих проектов недостаточно очередного промпта. Мы связываем актуальный контекст, границы доступа, выполнение и проверку в один воспроизводимый процесс. Начните с интерактивного примера — без регистрации и доступа к вашим данным.</p><div className="hero-actions"><a className="button primary" href={DIAGNOSTIC_URL} target="_blank" rel="noreferrer" onClick={() => track('cohort_cta_click')}>Подать workflow на диагностику</a><a className="button quiet" href={routeHref('/demo')}>Попробовать интерактивно →</a></div></div>
+      <aside className="hero-dashboard" aria-label="Схематический пример интерфейса, не реальные показатели">
+        <div className="hero-dashboard-top"><span>PROJECT CONTINUITY / EXAMPLE</span><span>SIMULATED</span></div>
+        <div className="hero-dashboard-core">
+          <div className="hero-dashboard-headline"><small>MISSION 001 / RESUME PROJECT</small><strong>Контекст восстановлен.<br />Следующий шаг известен.</strong></div>
+          <div className="hero-dashboard-steps"><span className="is-done">Цель</span><span className="is-done">Контекст</span><span className="is-done">Допуск</span><span>Проверка</span></div>
+          <div className="hero-dashboard-fact"><span>Current source</span><strong>Git + decisions</strong></div>
+          <div className="hero-dashboard-fact"><span>Write access</span><strong>allowlisted</strong></div>
+          <div className="hero-dashboard-fact"><span>Deployment</span><strong>not verified</strong></div>
+        </div>
+        <a href={routeHref('/demo')} className="hero-dashboard-open">Открыть интерактивный сценарий <span aria-hidden="true">↗</span></a>
+      </aside>
     </section>
     <section className="section"><div className="section-heading"><span>workflow</span><h2>Не магия автономии. Явная цепочка ответственности.</h2></div><Workflow /></section>
     {proof ? <ProofSummary proof={proof} /> : <section className="section"><p>Public-safe proof data unavailable while loading.</p></section>}
+    <ExperiencePreview />
     <DiagnosticOffer />
     <OwnedPromotionSlot />
-    <section className="section demo"><div className="section-heading"><span>demo flow</span><h2>Один workflow — от проблемы до evidence.</h2></div><div className="demo-grid"><article><strong>1. Baseline</strong><p>Фиксируем доступные поля до работы. Неснятые данные не оцениваем.</p></article><article><strong>2. Boundaries</strong><p>Определяем релевантный контекст, writable scope и команды проверки.</p></article><article><strong>3. Report</strong><p>Оставляем evidence, ограничения и следующий точный action владельцу.</p></article></div></section>
-    <section className="portal-bridge"><span>technical due diligence</span><h2>Полная архитектура не исчезла. Она доступна после результата.</h2><div>{portalLinks.slice(0, 8).map(([id, title]) => <a key={id} href={routeHref(productDocs.find((doc) => doc.id === id)?.route ?? '/product')}>{title} →</a>)}</div></section>
+    
+    <section className="portal-bridge"><span>technical due diligence</span><h2>Полная архитектура не исчезла. Она доступна после результата.</h2><div>{portalLinks.slice(0, 8).map(([id, title]) => <a key={id} href={routeHref(productDocs.find((doc) => doc.id === id)?.route ?? '/product')}>{title} →</a>)}<a href={routeHref('/whitepaper')}>Полный справочник · 33 раздела →</a></div></section>
   </main>
 }
 
@@ -117,7 +135,7 @@ function ProofPage({ id, index }: { id: string; index: ProofIndex }) {
 }
 
 function TechnicalPage({ doc }: { doc: ProductDoc }) {
-  return <main className="page technical-page"><div className="technical-top"><span className="eyebrow">technical portal</span><span className={`badge ${doc.status}`}>{statusLabel(doc.status)}</span></div><h1>{doc.title}</h1><p className="lead">{doc.summary}</p><aside className="portal-nav">{portalLinks.map(([id, label]) => { const page = productDocs.find((item) => item.id === id); return <a className={doc.id === id ? 'is-active' : ''} href={routeHref(page?.route ?? '/product')} key={id}>{label}</a> })}</aside>{doc.id === 'architecture' && <ArchitectureBlueprint />}<div className="doc-blocks">{doc.blocks.map((block) => <section key={block.heading}><h2>{block.heading}</h2><p>{block.body}</p>{block.bullets.length > 0 && <ul>{block.bullets.map((bullet) => <li key={bullet}>{bullet}</li>)}</ul>}</section>)}</div><footer className="page-footer"><a href={routeHref('/proofs')}>Proofs →</a><a href={DIAGNOSTIC_URL} target="_blank" rel="noreferrer" onClick={() => track('cohort_cta_click')}>Подать workflow</a></footer></main>
+  return <main className="page technical-page"><div className="technical-top"><span className="eyebrow">technical portal</span><span className={`badge ${doc.status}`}>{statusLabel(doc.status)}</span></div><h1>{doc.title}</h1><p className="lead">{doc.summary}</p><aside className="portal-nav">{portalLinks.map(([id, label]) => { const page = productDocs.find((item) => item.id === id); return <a className={doc.id === id ? 'is-active' : ''} href={routeHref(page?.route ?? '/product')} key={id}>{label}</a> })}</aside>{doc.id === 'architecture' && <ArchitectureBlueprint />}{doc.id === 'system-architecture' && <><SystemArchitectureExplorer /><p className="text-link"><a href={routeHref('/whitepaper')}>Читать весь технический справочник: 33 раздела →</a></p></>}<div className="doc-blocks">{doc.blocks.map((block) => <section key={block.heading}><h2>{block.heading}</h2><p>{block.body}</p>{block.bullets.length > 0 && <ul>{block.bullets.map((bullet) => <li key={bullet}>{bullet}</li>)}</ul>}</section>)}</div><footer className="page-footer"><a href={routeHref('/proofs')}>Proofs →</a><a href={DIAGNOSTIC_URL} target="_blank" rel="noreferrer" onClick={() => track('cohort_cta_click')}>Подать workflow</a></footer></main>
 }
 
 function NotFound() { return <main className="page"><span className="eyebrow">404</span><h1>Маршрут не найден.</h1><a className="text-link" href={routeHref('/')}>На главную →</a></main> }
@@ -126,7 +144,13 @@ export function ProductSite() {
   const [route, setRoute] = useState(currentRoute)
   useEffect(() => { const onPop = () => setRoute(currentRoute()); window.addEventListener('popstate', onPop); return () => window.removeEventListener('popstate', onPop) }, [])
   const doc = useMemo(() => productDocs.find((item) => item.route === route), [route])
-  useEffect(() => { document.title = route === '/' ? 'LOCAL AI OS — proof-first workflow' : 'LOCAL AI OS' }, [route])
-  const body = route === '/' ? <Home /> : route === '/proofs' || route.startsWith('/proofs/') ? <Proofs route={route} /> : doc ? <TechnicalPage doc={doc} /> : <NotFound />
+  useEffect(() => { document.title = route === '/' ? 'LOCAL AI OS — контролируемая AI-разработка' : route === '/demo' ? 'Интерактивная демонстрация — LOCAL AI OS' : route === '/value' ? 'Что получает покупатель — LOCAL AI OS' : route === '/compare' ? 'Сравнение альтернатив — LOCAL AI OS' : route === '/whitepaper' ? 'Полная техническая спецификация — LOCAL AI OS' : 'LOCAL AI OS' }, [route])
+  const body = route === '/' ? <Home />
+    : route === '/demo' ? <main className="exp-detail-page"><section className="exp-detail-hero"><span className="exp-overline">LOCAL AI OS / TRY THE WORKFLOW</span><h1>Как выглядит работа с AI, когда у неё есть память и критерий завершения.</h1><p>Интерактивная учебная модель: выбери сценарий, меняй права и проверь результат. Никакой регистрации или доступа к реальным данным.</p></section><DemoStudio /></main>
+    : route === '/whitepaper' ? <Suspense fallback={<main className="page"><p>Загрузка технического справочника…</p></main>}><TechnicalWhitepaper /></Suspense>
+    : route === '/value' ? <ValuePage />
+    : route === '/compare' ? <ComparePage />
+    : route === '/proofs' || route.startsWith('/proofs/') ? <Proofs route={route} />
+    : doc ? <TechnicalPage doc={doc} /> : <NotFound />
   return <><a className="skip-link" href="#content">К содержанию</a><div className="site-shell"><Header route={route} /><div id="content">{body}</div><footer className="site-footer"><span>LOCAL AI OS · public product surface</span><a href={routeHref('/docs')}>Public/private boundary</a></footer></div></>
 }

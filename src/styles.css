@@ -8,3 +8,10 @@ main { min-height:calc(100vh - 150px); } .hero { min-height:680px; display:grid;
 @media (max-width:850px) { .site-header { grid-template-columns:1fr auto; padding:16px 0; } nav { grid-column:1/-1; grid-row:2; justify-content:flex-start; overflow:auto; } .hero { grid-template-columns:1fr; min-height:0; padding:70px 0; } .section-heading,.doc-blocks section { grid-template-columns:1fr; gap:18px; } .metric-grid,.demo-grid { grid-template-columns:1fr; } .proof-list { grid-template-columns:1fr; } .doc-blocks ul { grid-column:auto; } }
 @media (max-width:520px) { .site-shell { padding:0 18px; } h1 { font-size:clamp(45px,14vw,68px); } .header-cta { display:none; } .workflow li { min-height:88px; grid-template-columns:54px 1fr; } .site-footer,.page-footer { flex-direction:column; } }
 @media (prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } }
+
+
+/* Product navigation grows beyond the original five-link header. */
+@media (min-width:851px) and (max-width:1180px) {
+  .site-header { grid-template-columns:1fr auto; padding:14px 0; }
+  .site-header nav { grid-column:1/-1; grid-row:2; justify-content:flex-start; overflow-x:auto; scrollbar-width:thin; }
+}
