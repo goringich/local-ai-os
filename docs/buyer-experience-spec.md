@@ -56,3 +56,14 @@ The calculator computes hypothetical baseline exposure from visitor-provided min
 - \`docs/product-manifest.json\`, \`docs/offer.md\`, \`docs/proof-contract.md\`, \`docs/growth-readiness.md\`.
 - \`docs/technical-architecture.md\`, \`docs/product-technical.md\`, \`docs/product/01-architecture.md\`.
 - Private System contracts in \`private System control repository\` govern underlying architecture; this document is a reviewed public explanation only.
+
+
+## Evidence-based memory and issue resolution product explanation (21 November 2026)
+
+The existing /value route now adds an **evidence contract**, not a second demo, proof database, or telemetry service. It explains the experimental chain: retrieve source → validate version, scope and provenance → allow/verify/reject → execute bounded action → verify original task acceptance.
+
+Four scorecard groups describe memory quality, issue closure integrity, resource economics and safety. Unmeasured numbers remain explicitly unmeasured. In particular, GitHub `closed` and PR merge cannot be promoted to a verified accepted outcome, and public founder aggregates cannot be claimed as a matched before/after experiment. The interactive /demo remains entirely synthetic; /proofs is the only current source of public reviewed evidence.
+
+The existing /compare route additionally names Mem0, Zep/Graphiti, Hindsight and Microsoft GraphRAG as memory/graph competitors. It does not claim their capabilities are absent, nor that LOCAL AI OS has independently beaten any of them. The research protocol remains private until explicit separate public-review approval.
+
+The new content is static and public-safe; it names no owner-private repository, issue number, branch, source path, raw conversation, credential or runtime identifier. Human product acceptance still requires actual browser/keyboard/mobile/contrast review and successful exact site QA on the changed commit.

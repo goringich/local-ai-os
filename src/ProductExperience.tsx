@@ -253,6 +253,49 @@ function ValueCalculator() {
   </section>
 }
 
+
+const EVIDENCE_GROUPS = [
+  {
+    name: '01 / Память',
+    metrics: ['Восстановленные обязательные факты / все размеченные', 'Применения устаревшего опыта / все применения', 'Правильные отказы при недостатке доказательств', 'Сохранение решений после смены сессии']
+  },
+  {
+    name: '02 / Задачи и issues',
+    metrics: ['Подтверждённо принятые задачи / исходные обязательства', 'Дни от задачи до проверенного результата', 'Повторные открытия после приёмки', 'Время от merge до работающего исхода']
+  },
+  {
+    name: '03 / Ресурсы',
+    metrics: ['Время до принятого результата (p50/p95)', 'Вмешательства владельца на результат', 'Токены и реальные затраты на результат', 'Повторная работа и восстановления после сбоя']
+  },
+  {
+    name: '04 / Доверие',
+    metrics: ['Ложные заявления «готово»', 'Запрещённые источники, попавшие в ответ', 'Доля утверждений с точным SHA и свидетельством', 'Независимо проверенные действия и ограниченный доступ']
+  }
+] as const
+
+function EvidenceBasedValue() {
+  return <section className="exp-proof-section" aria-labelledby="exp-proof-title">
+    <div className="exp-overline">EVIDENCE CONTRACT / НЕ МАРКЕТИНГОВЫЙ РЕЙТИНГ</div>
+    <h2 id="exp-proof-title">Память не должна просто «вспоминать». Она должна <em>помогать завершать задачи.</em></h2>
+    <p className="exp-proof-intro">Наше проверяемое продуктовое направление: найденное воспоминание сопровождается источником, актуальной версией и допустимой областью; успешное применение подтверждается только исходной приёмкой задачи. Это исследуемый метод, а не доказанное преимущество или уже поставленная клиенту функция.</p>
+    <ol className="exp-proof-flow" aria-label="Этапы проверяемого использования памяти">
+      {['Найти релевантное', 'Проверить версию и источник', 'Допустить или отказать', 'Выполнить действие', 'Проверить конечный результат'].map((stage, index) =>
+        <li key={stage}><span>{String(index + 1).padStart(2, '0')}</span><strong>{stage}</strong></li>
+      )}
+    </ol>
+    <div className="exp-proof-status">
+      <strong>Текущее состояние доказательств</strong>
+      <p>Есть исходная архитектура, инженерные тесты и ограниченный публичный founder proof. Парное улучшение качества памяти, снижение времени закрытия issues, коммерческий ROI и независимая клиентская приёмка <b>не измерены</b>. Мы не подменяем неизвестное нулём или успехом.</p>
+      <a href={import.meta.env.BASE_URL + 'proofs'}>Посмотреть опубликованные доказательства и ограничения ↗</a>
+    </div>
+    <h3>По каким метрикам будем проверять эффект</h3>
+    <div className="exp-proof-metrics">
+      {EVIDENCE_GROUPS.map(group => <article key={group.name}><span className="exp-overline">{group.name}</span><ul>{group.metrics.map(metric => <li key={metric}>{metric}</li>)}</ul><small>Достоверный числовой итог требует исходного baseline и проверяемых результатов.</small></article>)}
+    </div>
+    <p className="exp-proof-disclaimer">Проверка будет проводиться на одинаковых задачах и модели: без памяти, с обычным поиском и с контролем доказательств, включая ошибки и отказы. Один успешно завершённый PR не является подтверждением, что решена исходная задача.</p>
+  </section>
+}
+
 export function ValuePage() {
   return <main className="exp-detail-page">
     <div className="exp-detail-hero"><span className="exp-overline">LOCAL AI OS / BUYER GUIDE</span><h1>Что конкретно получает покупатель.</h1><p>Первый продукт — измеримое внедрение одного приватного инженерного workflow. Честно разделяем сегодняшний договор и долгосрочную архитектуру системы.</p><a className="button primary" href={import.meta.env.BASE_URL + 'demo'}>Пройти интерактивную демонстрацию →</a></div>
@@ -265,6 +308,7 @@ export function ValuePage() {
       ].map(([number, title, body]) => <article key={number}><span>{number}</span><div><h2>{title}</h2><p>{body}</p></div></article>)}
     </div>
     <AgentInterfaces />
+    <EvidenceBasedValue />
     <ValueCalculator />
     <section className="exp-faq">
       <h2>Не входит в обещание</h2>
@@ -284,6 +328,10 @@ const COMPETITORS = [
   { name: 'Factory Missions', focus: 'Декомпозиция, параллельные исполнители, проверка', overlap: 'Миссии, продолжительная разработка, validation', link: 'https://docs.factory.com/missions/overview' },
   { name: 'GitHub Copilot agents', focus: 'Агенты в GitHub, IDE и cloud workflow', overlap: 'Проектный контекст, задачи, PR и review', link: 'https://docs.github.com/en/copilot/concepts/agent-capabilities/about-agents/about-github-copilot-agents' },
   { name: 'OpenHands', focus: 'Платформа разработки с агентами и enterprise control', overlap: 'Локальные и серверные агенты, контролируемая работа', link: 'https://www.openhands.dev/' },
+  { name: 'Mem0', focus: 'Персистентная память агента с опубликованными LoCoMo/LongMemEval результатами', overlap: 'Семантическая и долговременная память; у Mem0 уже есть benchmark-публикации', link: 'https://github.com/mem0ai/memory-benchmarks' },
+  { name: 'Zep / Graphiti', focus: 'Временной граф знаний и история связей сущностей', overlap: 'Актуальность, изменения фактов и связи памяти', link: 'https://www.getzep.com/platform/graphiti/' },
+  { name: 'Hindsight', focus: 'Память и reasoning по прошлым фактам и опыту агента', overlap: 'Извлечение прошлого опыта и его оценка, сравнимые benchmark-подходы', link: 'https://github.com/vectorize-io/hindsight' },
+  { name: 'Microsoft GraphRAG', focus: 'Графовый поиск по документации: local, global и DRIFT', overlap: 'Многошаговый контекстный поиск, но не полный delivery-процесс', link: 'https://github.com/microsoft/graphrag' },
   { name: 'Letta Agent SDK', focus: 'Долговременная память и идентичность stateful AI-агентов', overlap: 'Продолжение сессий, память, восстановление состояния', link: 'https://www.letta.com/agent-sdk/' },
   { name: 'OpenAI Codex / Agents API', focus: 'Долгие coding-задачи, сохранённые сессии и управляемая оркестрация', overlap: 'Контекст, агенты, recovery и проверка инженерной работы', link: 'https://developers.openai.com/api/docs/guides/agents-api/overview' },
   { name: 'Claude Code', focus: 'Разработка с project memory, subagents и изолированными worktree', overlap: 'Память проекта, работа нескольких агентов, исполнительный цикл', link: 'https://code.claude.com/docs/en/memory' },
