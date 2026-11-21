@@ -95,12 +95,21 @@ try {
   await value.locator('#exp-time').fill('100')
   await value.locator('#exp-rate').fill('1800')
   assert.ok(await value.getByText('12 990 ₽').count() || await value.getByText('12 990 ₽').count(), 'Calculator must use the buyer inputs')
+  const proof = value.locator('.exp-proof-section')
+  assert.equal(await proof.locator('.exp-proof-flow li').count(), 5, 'Memory proof contract must show all five stages')
+  assert.equal(await proof.locator('.exp-proof-metrics article').count(), 4, 'All four metric groups required')
+  assert.equal(await proof.locator('.exp-proof-metrics li').count(), 16, 'All sixteen inspectable outcome metrics required')
+  assert.ok(await proof.getByText('не измерены', { exact: false }).count(), 'Must not invent memory/issue uplift')
+  assert.ok(await proof.locator('a[href$="/proofs"]').count(), 'Link to actual published proofs required')
   await value.screenshot({ path: SHOT_DIR + '/value-desktop.png', fullPage: true })
-  report('value: exact existing offer, no invented initial ROI, buyer inputs work')
+  report('value: buyer offer, guarded ROI, proof journey, 16 metrics and explicit unknown state')
 
   const compare = await pageFor(desktop, '/compare', errors)
   for (const competitor of ['Cursor Projects', 'Factory Missions', 'GitHub Copilot agents', 'OpenHands', 'Letta Agent SDK', 'Claude Code']) {
     assert.ok(await compare.getByText(competitor, { exact: true }).count(), 'Missing competitor: ' + competitor)
+  }
+  for (const memoryCompetitor of ['Mem0', 'Zep / Graphiti', 'Hindsight', 'Microsoft GraphRAG']) {
+    assert.ok(await compare.getByText(memoryCompetitor, { exact: true }).count(), 'Memory competitor missing: ' + memoryCompetitor)
   }
   report('compare: competitor overlap and evidence boundaries')
 
